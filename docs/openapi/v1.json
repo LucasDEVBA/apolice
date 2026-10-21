@@ -1,0 +1,26 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Apolice.Api | v1",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/health/live": {
+      "get": {
+        "tags": [
+          "Apolice.Api"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Apolice.Api"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Apolice.Api/Apolice.Api.csproj" />
+    <Project Path="src/Apolice.Application/Apolice.Application.csproj" />
+    <Project Path="src/Apolice.Domain/Apolice.Domain.csproj" />
+    <Project Path="src/Apolice.Infrastructure/Apolice.Infrastructure.csproj" />
+    <Project Path="src/Apolice.Worker/Apolice.Worker.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Apolice.Api.IntegrationTests/Apolice.Api.IntegrationTests.csproj" />
+    <Project Path="tests/Apolice.Application.Tests/Apolice.Application.Tests.csproj" />
+    <Project Path="tests/Apolice.ArchitectureTests/Apolice.ArchitectureTests.csproj" />
+    <Project Path="tests/Apolice.Domain.Tests/Apolice.Domain.Tests.csproj" />
+  </Folder>
+</Solution>
