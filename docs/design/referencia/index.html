@@ -1,0 +1,1299 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Apólice · Conceito A — Institucional premium</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400..700;1,400..700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400..700;1,8..60,400..700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    corePlugins: { preflight: true },
+    theme: {
+      extend: {
+        colors: {
+          navy: { 950: '#071427', 900: '#0B1F3A', 850: '#102849', 800: '#16305A', 700: '#1D3B6B', 600: '#24508F' },
+          gold: { 200: '#E6D3A8', 300: '#D9BF8C', 400: '#C9A86A', 500: '#B08D57', 700: '#7A5C2C' },
+          ink: { DEFAULT: '#0E1A2C', 2: '#44526A', 3: '#5D697D' },
+          canvas: '#F2F4F8', line: '#DFE4EC',
+        },
+        fontFamily: {
+          serif: ['"Source Serif 4"', 'Georgia', 'serif'],
+          sans: ['"Public Sans"', 'system-ui', 'sans-serif'],
+        },
+      },
+    },
+  };
+</script>
+<style>
+  :root {
+    --navy-950: #071427; --navy-900: #0B1F3A; --navy-850: #102849; --navy-800: #16305A; --navy-700: #1D3B6B; --navy-600: #24508F;
+    --steel-400: #5E93CF; --brass-500: #B5862F;
+    --gold-200: #E6D3A8; --gold-300: #D9BF8C; --gold-400: #C9A86A; --gold-500: #B08D57; --gold-700: #7A5C2C;
+    --ink: #0E1A2C; --ink-2: #44526A; --ink-3: #5D697D;
+    --on-navy: #F4F6FA; --on-navy-2: #B8C3D6; --on-navy-3: #8F9DB5;
+    --canvas: #F2F4F8; --surface: #FFFFFF; --surface-2: #F7F8FB;
+    --line: #DFE4EC; --line-soft: #ECEFF4; --control: #8A95A6;
+    --ok: #1E6B47; --ok-bg: #E6F2EB; --warn: #8A5700; --warn-bg: #FBF0D9; --bad: #A3302A; --bad-bg: #FBE9E7;
+    --r-card: 12px; --r-ctl: 8px;
+    --shadow-overlay: 0 12px 28px -10px rgba(7, 20, 39, .28), 0 2px 6px rgba(7, 20, 39, .08);
+    --serif: "Source Serif 4", Georgia, serif;
+    --sans: "Public Sans", system-ui, sans-serif;
+  }
+
+  /* ---------- Browser surfaces ---------- */
+  ::selection { background: #E6D3A8; color: #0E1A2C; }
+  html { caret-color: var(--navy-600); }
+  body { font-family: var(--sans); color: var(--ink); background: #D9DEE6; -webkit-font-smoothing: antialiased; font-size: 14px; line-height: 1.5; }
+  :focus-visible { outline: 2px solid var(--navy-600); outline-offset: 2px; }
+  .on-navy :focus-visible { outline-color: var(--gold-400); }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: #C3CBD7; border-radius: 10px; border: 2px solid transparent; background-clip: padding-box; }
+  a { color: inherit; text-decoration: none; }
+  .tnum { font-variant-numeric: tabular-nums lining-nums; }
+
+  /* ---------- Presentation deck (fora do produto) ---------- */
+  .deck { padding: 48px 40px 96px; display: flex; flex-direction: column; align-items: center; gap: 56px; }
+  .deck-head { width: 1440px; display: flex; justify-content: space-between; align-items: baseline; color: #2E3A4E; }
+  .deck-head h1 { font-family: var(--serif); font-size: 28px; font-weight: 600; letter-spacing: -0.01em; }
+  .deck-head p { font-size: 14px; color: #44526A; }
+  .shot { display: flex; flex-direction: column; gap: 12px; }
+  .shot > figcaption { font-size: 13px; font-weight: 600; color: #2E3A4E; }
+  .screen { position: relative; overflow: hidden; background: var(--canvas); box-shadow: 0 30px 60px -30px rgba(7,20,39,.35); }
+  .screen--desk { width: 1440px; }
+  .screen--phone { width: 390px; border-radius: 0; }
+
+  /* ---------- Serif numerals ---------- */
+  .fig { font-family: var(--serif); font-variant-numeric: lining-nums tabular-nums; font-feature-settings: "lnum" 1, "tnum" 1; font-optical-sizing: auto; letter-spacing: -0.015em; }
+  .fig .u { font-family: var(--sans); font-size: max(11px, .42em); font-weight: 500; letter-spacing: 0; color: var(--ink-2); margin-right: .28em; vertical-align: .55em; }
+  .fig .u-after { font-family: var(--sans); font-size: max(11px, .42em); font-weight: 500; letter-spacing: 0; color: var(--ink-2); margin-left: .22em; }
+  .fig .c { font-size: .6em; letter-spacing: 0; }
+  .on-navy .fig .u, .on-navy .fig .u-after { color: var(--on-navy-2); }
+
+  /* ---------- Icons ---------- */
+  .ic { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .ic-sm { width: 15px; height: 15px; }
+  .ic-xs { width: 13px; height: 13px; stroke-width: 2; }
+
+  /* ---------- Brand ---------- */
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand__mark { width: 30px; height: 30px; flex: none; }
+  .brand__word { font-family: var(--serif); font-weight: 600; font-size: 22px; letter-spacing: -0.01em; line-height: 1; }
+
+  /* ---------- Buttons ---------- */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: var(--r-ctl); font-size: 14px; font-weight: 600; white-space: nowrap; transition: background-color .18s cubic-bezier(.2,.8,.2,1), border-color .18s, color .18s; cursor: pointer; }
+  .btn--primary { background: var(--navy-900); color: #fff; }
+  .btn--primary:hover { background: var(--navy-800); }
+  .btn--secondary { background: var(--surface); color: var(--ink); border: 1px solid var(--line); box-shadow: 0 1px 1px rgba(7,20,39,.04); }
+  .btn--secondary:hover { border-color: #C5CDD9; background: var(--surface-2); }
+  .btn--ghost { color: var(--ink-2); }
+  .btn--ghost:hover { background: rgba(14,26,44,.05); color: var(--ink); }
+  .btn--lg { height: 46px; font-size: 15px; padding: 0 20px; }
+  .btn--danger-ghost { color: var(--bad); }
+
+  /* ---------- Badges ---------- */
+  .badge { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border-radius: 999px; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+  .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .badge--ok { color: var(--ok); background: var(--ok-bg); }
+  .badge--warn { color: var(--warn); background: var(--warn-bg); }
+  .badge--bad { color: var(--bad); background: var(--bad-bg); }
+  .badge--neutral { color: var(--ink-2); background: #EBEEF3; }
+  .badge--plain::before { display: none; }
+
+  /* ---------- Cards ---------- */
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); }
+  .card__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 22px 24px 0; }
+  .card__title { font-family: var(--serif); font-size: 20px; font-weight: 600; line-height: 1.25; letter-spacing: -0.01em; color: var(--ink); }
+  .card__sub { font-size: 13px; color: var(--ink-3); margin-top: 3px; }
+  .link { color: var(--navy-600); font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; gap: 4px; text-underline-offset: 3px; }
+  .link:hover { text-decoration: underline; }
+  .code { font-variant-numeric: tabular-nums; font-weight: 600; letter-spacing: .01em; }
+
+  /* ---------- App shell ---------- */
+  .app { display: grid; grid-template-columns: 248px 1fr; min-height: 100%; }
+  .side { background: var(--navy-900); color: var(--on-navy-2); display: flex; flex-direction: column; padding: 22px 14px 16px; position: relative; overflow: hidden; }
+  .side .brand { padding: 4px 10px 0; color: var(--on-navy); }
+  .side__org { margin: 22px 6px 18px; padding: 12px 12px; border: 1px solid rgba(201,168,106,.28); border-radius: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .side__org b { display: block; color: var(--on-navy); font-weight: 600; font-size: 13.5px; line-height: 1.3; }
+  .side__org span { font-size: 12px; color: var(--on-navy-3); }
+  .nav { display: flex; flex-direction: column; gap: 2px; }
+  .nav__item { display: flex; align-items: center; gap: 12px; height: 40px; padding: 0 12px; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--on-navy-2); transition: background-color .18s, color .18s; }
+  .nav__item:hover { background: rgba(255,255,255,.05); color: var(--on-navy); }
+  .nav__item .ic { color: var(--on-navy-3); }
+  .nav__item.is-active { background: var(--navy-800); color: #fff; font-weight: 600; }
+  .nav__item.is-active .ic { color: var(--gold-400); }
+  .nav__count { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--on-navy-2); font-variant-numeric: tabular-nums; }
+  .nav__item.is-locked { color: var(--on-navy-3); }
+  .nav__item.is-locked .lock { margin-left: auto; width: 14px; height: 14px; }
+  .nav__sep { height: 1px; background: rgba(255,255,255,.08); margin: 14px 10px; }
+  .side__user { margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 12px 8px 4px; border-top: 1px solid rgba(255,255,255,.08); }
+  .side__user b { color: var(--on-navy); font-weight: 600; font-size: 13.5px; display: block; line-height: 1.3; }
+  .side__user span { font-size: 12px; color: var(--on-navy-3); }
+  .side__user .switch { margin-left: auto; width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; color: var(--on-navy-2); }
+  .side__user .switch:hover { background: rgba(255,255,255,.06); }
+
+  .avatar { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-family: var(--serif); font-weight: 600; font-size: 14px; flex: none; letter-spacing: .01em; }
+  .avatar--navy { background: #E3E9F3; color: var(--navy-700); }
+  .avatar--steel { background: #E1ECF8; color: #1F4A85; }
+  .avatar--gold { background: #F4ECDC; color: var(--gold-700); }
+  .avatar--dark { background: var(--navy-900); color: var(--gold-300); box-shadow: inset 0 0 0 1px rgba(201,168,106,.45); }
+  .avatar--ring { box-shadow: 0 0 0 1px rgba(201,168,106,.55); }
+
+  .main { min-width: 0; display: flex; flex-direction: column; }
+  .topbar { height: 64px; display: flex; align-items: center; gap: 16px; padding: 0 40px; background: var(--surface); border-bottom: 1px solid var(--line); }
+  .search { display: flex; align-items: center; gap: 10px; width: 420px; height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: var(--r-ctl); background: var(--surface-2); color: var(--ink-3); font-size: 14px; }
+  .search kbd { margin-left: auto; font-family: var(--sans); font-size: 11.5px; font-weight: 600; color: var(--ink-2); border: 1px solid var(--line); background: #fff; border-radius: 5px; padding: 1px 6px; }
+  .topbar__right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .iconbtn { width: 40px; height: 40px; border-radius: var(--r-ctl); display: grid; place-items: center; color: var(--ink-2); position: relative; }
+  .iconbtn:hover { background: var(--surface-2); color: var(--ink); }
+  .iconbtn .dot { position: absolute; top: 9px; right: 10px; width: 8px; height: 8px; border-radius: 50%; background: var(--bad); box-shadow: 0 0 0 2px #fff; }
+  .env { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--gold-700); background: #F6EFE1; border: 1px solid #E8D9B8; border-radius: 999px; height: 26px; padding: 0 10px; }
+
+  .page { padding: 32px 40px 48px; display: flex; flex-direction: column; gap: 24px; }
+  .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+  .page-title { font-family: var(--serif); font-weight: 600; font-size: 32px; line-height: 1.15; letter-spacing: -0.02em; color: var(--ink); }
+  .page-sub { font-size: 14px; color: var(--ink-3); margin-top: 6px; }
+  .crumbs { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-3); margin-bottom: 10px; }
+  .crumbs a:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+  .crumbs .ic { width: 13px; height: 13px; color: #9AA4B4; }
+  .crumbs b { color: var(--ink-2); font-weight: 600; }
+
+  /* ---------- KPI strip ---------- */
+  .kpis { display: grid; grid-template-columns: repeat(6, 1fr); }
+  .kpi { padding: 20px 20px 20px 22px; position: relative; }
+  .kpi + .kpi::before { content: ""; position: absolute; left: 0; top: 20px; bottom: 20px; width: 1px; background: var(--line-soft); }
+  .kpi__label { font-size: 13px; font-weight: 500; color: var(--ink-2); line-height: 1.3; }
+  .kpi__value { font-size: 36px; font-weight: 500; line-height: 1.1; color: var(--ink); margin-top: 10px; white-space: nowrap; }
+  .kpi__meta { font-size: 12.5px; color: var(--ink-3); margin-top: 8px; line-height: 1.35; white-space: nowrap; }
+  .delta-up { color: var(--ok); font-weight: 600; display: inline-flex; align-items: center; gap: 2px; vertical-align: -1px; margin-right: 2px; }
+  .delta-warn { color: var(--warn); font-weight: 600; margin-right: 2px; }
+  .meter { position: relative; height: 4px; border-radius: 4px; background: #E7EBF1; margin-top: 12px; }
+  .meter > i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--navy-600); }
+  .meter > b { position: absolute; top: -4px; width: 2px; height: 12px; background: var(--gold-500); border-radius: 1px; }
+
+  /* ---------- Dashboard grid ---------- */
+  .grid-12 { display: grid; grid-template-columns: repeat(12, 1fr); gap: 24px; }
+  .span-8 { grid-column: span 8; } .span-4 { grid-column: span 4; }
+
+  .chart-total { text-align: right; }
+  .chart-total .fig { font-size: 28px; font-weight: 500; line-height: 1.1; }
+  .chart-total small { display: block; font-size: 12.5px; color: var(--ink-3); margin-top: 4px; }
+  .chart-svg text { font-family: var(--sans); font-variant-numeric: tabular-nums; }
+
+  .stack { display: flex; gap: 2px; height: 12px; margin: 22px 24px 4px; }
+  .stack > i { display: block; height: 100%; }
+  .stack > i:first-child { border-radius: 4px 0 0 4px; } .stack > i:last-child { border-radius: 0 4px 4px 0; }
+  .prod-list { padding: 8px 24px 0; }
+  .prod { display: grid; grid-template-columns: 12px 1fr auto; gap: 12px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line-soft); }
+  .prod:last-child { border-bottom: 0; }
+  .swatch { width: 10px; height: 10px; border-radius: 3px; }
+  .prod b { font-weight: 600; font-size: 14px; display: block; }
+  .prod span { font-size: 12.5px; color: var(--ink-3); }
+  .prod .val { text-align: right; }
+  .prod .val .fig { font-size: 19px; font-weight: 500; display: block; line-height: 1.2; }
+  .prod-foot { margin: 8px 24px 0; padding: 14px 0 20px; border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .prod-foot span { display: block; font-size: 12px; color: var(--ink-3); }
+  .prod-foot b { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  .feed { padding: 10px 24px 8px; }
+  .feed__row { display: grid; grid-template-columns: 36px 1fr auto; gap: 14px; align-items: start; padding: 14px 0; border-bottom: 1px solid var(--line-soft); }
+  .feed__row:last-child { border-bottom: 0; }
+  .chip { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; }
+  .chip--navy { background: #E7ECF5; color: var(--navy-700); }
+  .chip--steel { background: #E3EDF8; color: #1F4A85; }
+  .chip--warn { background: var(--warn-bg); color: var(--warn); }
+  .chip--gold { background: #F4ECDC; color: var(--gold-700); }
+  .chip--bad { background: var(--bad-bg); color: var(--bad); }
+  .feed__text { font-size: 14px; color: var(--ink); line-height: 1.45; }
+  .feed__text a { font-weight: 600; color: var(--navy-600); font-variant-numeric: tabular-nums; }
+  .feed__text a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .feed__meta { font-size: 12.5px; color: var(--ink-3); margin-top: 2px; }
+  .feed__time { font-size: 12.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; white-space: nowrap; padding-top: 2px; text-align: right; }
+  .feed__time b { display: block; font-weight: 600; color: var(--ink); font-size: 13px; }
+
+  .renew-sum { display: flex; align-items: baseline; gap: 10px; padding: 18px 24px 4px; }
+  .renew-sum .fig { font-size: 34px; font-weight: 500; line-height: 1; }
+  .renew-sum span { font-size: 13px; color: var(--ink-3); }
+  .renew-list { padding: 6px 24px 0; }
+  .renew { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line-soft); }
+  .renew:last-child { border-bottom: 0; }
+  .renew b { display: block; font-size: 13.5px; font-weight: 600; }
+  .renew span { font-size: 12.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .renew .r { text-align: right; }
+  .renew .r b { font-variant-numeric: tabular-nums; }
+
+  /* ---------- Login ---------- */
+  .login { display: grid; grid-template-columns: 620px 1fr; height: 900px; }
+  .login__brandside { background: var(--navy-950); color: var(--on-navy); position: relative; overflow: hidden; padding: 48px 56px; display: flex; flex-direction: column; }
+  .login__brandside .brand__word { font-size: 26px; }
+  .login__brandside .brand__mark { width: 36px; height: 36px; }
+  .login__engrave { position: absolute; right: -250px; bottom: -250px; width: 760px; height: 760px; pointer-events: none; }
+  .login__band { position: absolute; left: 0; right: 0; top: 118px; height: 40px; opacity: .9; pointer-events: none; }
+  .login__headline { font-family: var(--serif); font-weight: 500; font-size: 46px; line-height: 1.1; letter-spacing: -0.022em; max-width: 480px; margin-top: 132px; text-wrap: balance; }
+  .login__lede { font-size: 16px; line-height: 1.6; color: var(--on-navy-2); max-width: 450px; margin-top: 20px; }
+  .specimen { margin-top: auto; position: relative; width: 420px; border: 1px solid rgba(201,168,106,.38); border-radius: 12px; padding: 20px 22px 18px; background: rgba(11,31,58,.82); }
+  .specimen__row { display: flex; align-items: center; justify-content: space-between; }
+  .specimen__prod { font-size: 12.5px; font-weight: 600; color: var(--gold-300); display: flex; align-items: center; gap: 6px; }
+  .specimen__num { font-family: var(--serif); font-size: 24px; font-weight: 500; letter-spacing: -0.01em; margin-top: 8px; font-variant-numeric: lining-nums tabular-nums; }
+  .specimen__who { font-size: 13px; color: var(--on-navy-2); margin-top: 2px; }
+  .term { margin-top: 16px; }
+  .term__bar { height: 3px; border-radius: 3px; background: rgba(255,255,255,.12); position: relative; }
+  .term__bar > i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: var(--gold-400); }
+  .term__labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--on-navy-3); margin-top: 8px; font-variant-numeric: tabular-nums; }
+  .specimen__foot { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.08); }
+  .specimen__foot .lbl { font-size: 12px; color: var(--on-navy-3); display: block; margin-bottom: 2px; }
+  .specimen__foot .val { color: var(--on-navy); font-size: 14px; font-weight: 600; display: block; font-variant-numeric: tabular-nums; }
+  .specimen__foot .fig { font-size: 24px; font-weight: 500; color: #fff; }
+  .badge--on-navy { color: #8FE0B5; background: rgba(46,160,105,.16); box-shadow: inset 0 0 0 1px rgba(143,224,181,.25); }
+  .login__legal { margin-top: 28px; font-size: 12.5px; color: var(--on-navy-3); display: flex; gap: 16px; }
+
+  .login__formside { background: var(--surface); display: flex; flex-direction: column; padding: 40px 56px; }
+  .login__topnav { display: flex; justify-content: flex-end; gap: 20px; font-size: 13.5px; color: var(--ink-2); }
+  .login__topnav a:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+  .login__col { width: 460px; margin: auto; padding-bottom: 24px; }
+  .login__title { font-family: var(--serif); font-size: 34px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; }
+  .login__intro { font-size: 15px; color: var(--ink-2); margin-top: 10px; line-height: 1.55; }
+  .personas { margin-top: 28px; border: 0; }
+  .personas legend { font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 10px; display: flex; width: 100%; justify-content: space-between; }
+  .personas legend span { font-weight: 500; color: var(--ink-3); font-size: 12.5px; }
+  .persona-list { border: 1px solid var(--line); border-radius: var(--r-card); overflow: hidden; }
+  .persona { display: grid; grid-template-columns: 40px 1fr 20px; gap: 14px; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--line-soft); transition: background-color .18s; cursor: pointer; }
+  .persona:last-child { border-bottom: 0; }
+  .persona .avatar { width: 40px; height: 40px; font-size: 15px; }
+  .persona b { font-weight: 600; font-size: 15px; color: var(--ink); }
+  .persona .role { font-size: 13px; color: var(--ink-2); font-weight: 500; }
+  .persona .scope { display: block; font-size: 12.5px; color: var(--ink-3); margin-top: 1px; }
+  .persona .go { color: #9AA4B4; transition: transform .2s cubic-bezier(.2,.8,.2,1), color .2s; }
+  .persona:hover, .persona.is-hover { background: #F5F7FB; }
+  .persona:hover .go, .persona.is-hover .go { color: var(--navy-900); transform: translateX(2px); }
+  .divider { display: flex; align-items: center; gap: 14px; margin: 26px 0 20px; font-size: 12.5px; color: var(--ink-3); }
+  .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field + .field { margin-top: 14px; }
+  .field label { font-size: 13px; font-weight: 600; color: var(--ink); }
+  .input { height: 44px; border: 1px solid var(--control); border-radius: var(--r-ctl); padding: 0 14px; display: flex; align-items: center; gap: 10px; font-size: 15px; color: var(--ink); background: #fff; }
+  .input .ph { color: var(--ink-3); }
+  .input .ic { color: var(--ink-3); }
+  .row-between { display: flex; justify-content: space-between; align-items: center; }
+  .check { display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--ink-2); }
+  .check i { width: 16px; height: 16px; border: 1px solid var(--control); border-radius: 4px; background: #fff; }
+  .login__note { margin-top: 18px; font-size: 12.5px; color: var(--ink-3); display: flex; gap: 8px; align-items: flex-start; line-height: 1.5; }
+
+  /* ---------- Policy detail ---------- */
+  .policy-face { background: var(--navy-900); color: var(--on-navy); border-radius: 14px; position: relative; overflow: hidden; }
+  .policy-face__engrave { position: absolute; right: -150px; top: -250px; width: 520px; height: 520px; pointer-events: none; }
+  .policy-face__band { position: absolute; left: 0; right: 0; top: 0; height: 6px; background: linear-gradient(90deg, #8E6E3C, #D9BF8C 35%, #A9884F 65%, #D2B47C); opacity: .85; }
+  .policy-face__top { position: relative; display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; padding: 30px 32px 26px; }
+  .policy-face__kind { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--gold-300); }
+  .policy-face__kind span { color: var(--on-navy-3); font-weight: 500; }
+  .policy-face__num { display: flex; align-items: center; gap: 16px; margin-top: 10px; }
+  .policy-face__num h2 { font-family: var(--serif); font-size: 40px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.05; font-variant-numeric: lining-nums tabular-nums; }
+  .policy-face__who { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: 14px; color: var(--on-navy-2); }
+  .policy-face__who b { color: var(--on-navy); font-weight: 600; }
+  .policy-actions { display: flex; gap: 8px; }
+  .btn--on-navy { color: var(--on-navy); border: 1px solid rgba(255,255,255,.22); background: rgba(255,255,255,.02); }
+  .btn--on-navy:hover { background: rgba(255,255,255,.08); }
+  .btn--light { background: #fff; color: var(--navy-900); }
+  .btn--light:hover { background: #EEF1F6; }
+  .btn--cancel { color: #F2A69E; }
+  .btn--cancel:hover { background: rgba(242,166,158,.1); }
+  .policy-facts { position: relative; display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; border-top: 1px solid rgba(201,168,106,.3); background: #091A31; }
+  .pfact { padding: 20px 28px 24px 32px; }
+  .pfact + .pfact { border-left: 1px solid rgba(255,255,255,.08); }
+  .pfact__label { font-size: 12.5px; font-weight: 500; color: var(--on-navy-3); }
+  .pfact__value { font-size: 15px; font-weight: 600; color: var(--on-navy); margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .pfact__value.fig { font-size: 30px; font-weight: 500; line-height: 1.05; margin-top: 4px; }
+  .pfact__note { font-size: 12.5px; color: var(--on-navy-3); margin-top: 6px; font-variant-numeric: tabular-nums; }
+
+  .detail-grid { display: grid; grid-template-columns: 1fr 380px; gap: 24px; align-items: start; }
+  .tbl { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  .tbl th { font-size: 12.5px; font-weight: 600; color: var(--ink-2); text-align: left; padding: 10px 16px; background: var(--surface-2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .tbl th:first-child, .tbl td:first-child { padding-left: 24px; }
+  .tbl th:last-child, .tbl td:last-child { padding-right: 24px; }
+  .tbl td { padding: 13px 16px; border-bottom: 1px solid var(--line-soft); vertical-align: top; font-size: 14px; }
+  .tbl .num { text-align: right; white-space: nowrap; }
+  .tbl td .sub { display: block; font-size: 12.5px; color: var(--ink-3); margin-top: 1px; }
+  .tbl td.codecell { color: var(--ink-2); font-weight: 600; font-size: 13px; padding-top: 15px; }
+  .tbl tbody tr:hover td { background: #FAFBFD; }
+  .tbl tfoot td { border-bottom: 0; padding-top: 8px; padding-bottom: 8px; color: var(--ink-2); }
+  .tbl tfoot tr:first-child td { padding-top: 16px; }
+  .tbl tfoot tr.total td { padding-top: 14px; padding-bottom: 20px; color: var(--ink); }
+  .tbl tfoot tr.total td.num .fig { font-size: 24px; font-weight: 500; }
+
+  .sched { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; padding: 18px 24px 24px; }
+  .inst { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font-variant-numeric: tabular-nums; }
+  .inst__n { display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
+  .inst__n .ic { color: var(--ok); }
+  .inst__d { font-size: 13px; color: var(--ink-3); margin-top: 6px; }
+  .inst__v { font-size: 15px; font-weight: 600; color: var(--ink); margin-top: 2px; }
+  .inst__s { font-size: 12px; color: var(--ok); margin-top: 6px; font-weight: 500; }
+  .inst.is-paid { background: #FBFCFD; }
+  .inst.is-next { border-color: var(--navy-700); box-shadow: inset 0 0 0 1px var(--navy-700); }
+  .inst.is-next .inst__s { color: var(--navy-700); font-weight: 600; }
+  .inst.is-open .inst__s { color: var(--ink-3); }
+
+  .tl { padding: 18px 24px 22px; }
+  .tl__item { display: grid; grid-template-columns: 20px 1fr; gap: 12px; position: relative; padding-bottom: 20px; }
+  .tl__item:last-child { padding-bottom: 0; }
+  .tl__item::before { content: ""; position: absolute; left: 9.5px; top: 18px; bottom: -2px; width: 1px; background: var(--line); }
+  .tl__item:last-child::before { display: none; }
+  .tl__node { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; margin-top: 1px; }
+  .tl__node i { width: 8px; height: 8px; border-radius: 50%; }
+  .tl__node--warn { background: var(--warn-bg); } .tl__node--warn i { background: var(--warn); }
+  .tl__node--gold { background: #F4ECDC; } .tl__node--gold i { background: var(--gold-500); }
+  .tl__node--steel { background: #E3EDF8; } .tl__node--steel i { background: var(--steel-400); }
+  .tl__node--navy { background: #E3E9F3; } .tl__node--navy i { background: var(--navy-700); }
+  .tl__when { font-size: 12.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .tl__what { font-size: 14px; font-weight: 600; color: var(--ink); margin-top: 2px; }
+  .tl__what a { color: var(--navy-600); }
+  .tl__desc { font-size: 13px; color: var(--ink-2); margin-top: 3px; line-height: 1.5; }
+  .tl__desc .badge { margin-top: 8px; }
+
+  .docs { padding: 10px 24px 14px; }
+  .doc { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line-soft); }
+  .doc:last-child { border-bottom: 0; }
+  .doc__ic { width: 34px; height: 40px; border: 1px solid var(--line); border-radius: 6px; display: grid; place-items: center; font-size: 9.5px; font-weight: 700; color: var(--bad); letter-spacing: .04em; background: #fff; flex: none; }
+  .doc b { display: block; font-size: 13.5px; font-weight: 600; }
+  .doc span { font-size: 12.5px; color: var(--ink-3); }
+  .doc .iconbtn { margin-left: auto; width: 34px; height: 34px; }
+
+  /* ---------- Quote wizard ---------- */
+  .stepper { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; padding: 0 24px 18px; }
+  .step { display: flex; align-items: flex-start; gap: 12px; position: relative; padding-top: 18px; border-top: 3px solid var(--line); }
+  .step.is-done { border-top-color: var(--navy-700); }
+  .step.is-current { border-top-color: var(--gold-500); }
+  .step__dot { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; flex: none; position: relative; z-index: 1; font-variant-numeric: tabular-nums; }
+  .step.is-done .step__dot { background: var(--navy-900); color: #fff; }
+  .step.is-current .step__dot { background: #fff; color: var(--navy-900); box-shadow: inset 0 0 0 2px var(--navy-900); }
+  .step.is-todo .step__dot { background: #fff; color: var(--ink-3); box-shadow: inset 0 0 0 1px var(--control); }
+  .step__txt { margin-top: 3px; min-width: 0; }
+  .step__txt b { display: block; font-size: 14px; font-weight: 600; color: var(--ink); line-height: 1.3; }
+  .step__txt span { font-size: 12.5px; color: var(--ink-3); white-space: nowrap; }
+  .step.is-current .step__txt span { color: var(--gold-700); font-weight: 600; }
+
+  .quote-grid { display: grid; grid-template-columns: 1fr 376px; gap: 24px; align-items: start; }
+  .cov-group { padding: 0 24px; }
+  .cov-group h3 { font-size: 13px; font-weight: 600; color: var(--ink-2); padding: 20px 0 8px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; }
+  .cov-group h3 span { font-weight: 500; color: var(--ink-3); }
+  .cov-row { display: grid; grid-template-columns: 44px 1fr 214px 104px; gap: 14px; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--line-soft); }
+  .cov-row:last-child { border-bottom: 0; }
+  .cov-row b { font-size: 14.5px; font-weight: 600; color: var(--ink); display: block; }
+  .cov-row .desc { font-size: 12.5px; color: var(--ink-3); margin-top: 2px; display: block; line-height: 1.45; }
+  .cov-row .price { text-align: right; font-variant-numeric: tabular-nums; font-size: 14.5px; font-weight: 600; color: var(--ink); }
+  .cov-row .price small { display: block; font-size: 12px; color: var(--ink-3); font-weight: 500; }
+  .cov-row.is-off b { color: var(--ink-2); }
+  .cov-row.is-off .price { color: var(--ink-3); font-weight: 500; }
+  .toggle { width: 40px; height: 24px; border-radius: 999px; position: relative; background: var(--control); transition: background-color .2s; flex: none; }
+  .toggle::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(7,20,39,.25); transition: transform .22s cubic-bezier(.2,.8,.2,1); }
+  .toggle.is-on { background: var(--navy-900); }
+  .toggle.is-on::after { transform: translateX(16px); }
+  .select { height: 40px; border: 1px solid var(--control); border-radius: var(--r-ctl); padding: 0 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 14px; color: var(--ink); background: #fff; font-variant-numeric: tabular-nums; }
+  .select .ic { color: var(--ink-2); width: 16px; height: 16px; }
+  .select.is-focus { border-color: var(--navy-600); box-shadow: 0 0 0 3px rgba(36,80,143,.18); }
+  .select.is-disabled { background: var(--surface-2); color: var(--ink-3); border-color: #C9D0DA; }
+  .ctl-help { font-size: 12px; color: var(--ink-3); margin-top: 5px; font-variant-numeric: tabular-nums; }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--control); border-radius: var(--r-ctl); padding: 3px; height: 40px; gap: 3px; }
+  .seg span { display: grid; place-items: center; font-size: 13.5px; font-weight: 500; color: var(--ink-2); border-radius: 5px; }
+  .seg span.is-on { background: var(--navy-900); color: #fff; font-weight: 600; }
+  .wizard-nav { display: flex; align-items: center; gap: 10px; padding: 18px 24px; border-top: 1px solid var(--line); background: var(--surface-2); border-radius: 0 0 var(--r-card) var(--r-card); }
+
+  .calc { position: sticky; top: 24px; overflow: hidden; }
+  .calc__head { display: flex; justify-content: space-between; align-items: flex-start; padding: 22px 24px 4px; }
+  .live { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--ok); }
+  .live i { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 3px rgba(30,107,71,.15); }
+  .calc__sec { padding: 14px 24px 4px; }
+  .calc__sec h4 { font-size: 12.5px; font-weight: 600; color: var(--ink-2); margin-bottom: 6px; display: flex; justify-content: space-between; }
+  .calc__sec h4 span { font-weight: 500; color: var(--ink-3); }
+  .leader { display: flex; align-items: baseline; font-size: 13.5px; color: var(--ink); padding: 4px 0; font-variant-numeric: tabular-nums; }
+  .leader .dots { flex: 1; border-bottom: 1px dotted #B9C1CD; margin: 0 8px; transform: translateY(-4px); min-width: 16px; }
+  .leader .v { white-space: nowrap; }
+  .leader.is-strong { font-weight: 600; }
+  .factor { display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--line-soft); }
+  .factor:last-child { border-bottom: 0; }
+  .factor b { font-size: 13.5px; font-weight: 600; display: block; }
+  .factor span { font-size: 12px; color: var(--ink-3); }
+  .factor .m { font-family: var(--serif); font-size: 19px; font-weight: 500; font-variant-numeric: lining-nums tabular-nums; color: var(--ink); align-self: center; }
+  .factor .m.is-disc { color: var(--ok); }
+  .calc__sub { margin: 10px 24px 0; padding: 12px 0 14px; border-top: 1px solid var(--line); }
+  .calc__total { background: var(--navy-900); color: var(--on-navy); padding: 20px 24px 20px; position: relative; overflow: hidden; }
+  .calc__total-engrave { position: absolute; right: -120px; top: -150px; width: 260px; height: 260px; pointer-events: none; }
+  .calc__total .lbl { font-size: 13px; color: var(--on-navy-2); font-weight: 500; position: relative; }
+  .calc__total .fig { font-size: 42px; font-weight: 500; color: #fff; line-height: 1.05; margin-top: 4px; position: relative; }
+  .calc__total .inst-line { font-size: 14px; color: var(--gold-300); margin-top: 6px; font-weight: 500; position: relative; font-variant-numeric: tabular-nums; }
+  .calc__total .valid { font-size: 12.5px; color: var(--on-navy-3); margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.1); position: relative; font-variant-numeric: tabular-nums; }
+
+  /* ---------- Mobile ---------- */
+  .m-top { height: 56px; display: flex; align-items: center; gap: 4px; padding: 0 8px 0 4px; background: var(--navy-900); color: var(--on-navy); }
+  .m-top .iconbtn { color: var(--on-navy-2); }
+  .m-top .brand__word { font-size: 20px; }
+  .m-top .brand__mark { width: 26px; height: 26px; }
+  .m-page { padding: 20px 16px 24px; display: flex; flex-direction: column; gap: 16px; }
+  .m-title { font-family: var(--serif); font-size: 27px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; }
+  .m-kpis { display: grid; grid-template-columns: 1fr 1fr; }
+  .m-kpis .kpi { padding: 16px 16px; }
+  .m-kpis .kpi::before { display: none; }
+  .m-kpis .kpi:nth-child(odd) { border-right: 1px solid var(--line-soft); }
+  .m-kpis .kpi:nth-child(-n+4) { border-bottom: 1px solid var(--line-soft); }
+  .m-kpis .kpi__value { font-size: 28px; margin-top: 6px; }
+  .m-kpis .kpi__meta { margin-top: 4px; }
+  .m-card-head { display: flex; justify-content: space-between; align-items: flex-start; padding: 18px 16px 0; }
+  .m-card-head .card__title { font-size: 18px; }
+  .m-tabs { display: grid; grid-template-columns: repeat(5, 1fr); height: 64px; background: #fff; border-top: 1px solid var(--line); }
+  .m-tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 11.5px; font-weight: 500; color: var(--ink-3); }
+  .m-tab.is-active { color: var(--navy-900); font-weight: 700; }
+  .m-tab.is-active .ic { color: var(--navy-900); }
+</style>
+</head>
+<body>
+
+<!-- Ícones: traçados da biblioteca Lucide (MIT) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="foil" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E9D6A6"/><stop offset=".45" stop-color="#C9A86A"/><stop offset=".7" stop-color="#A88746"/><stop offset="1" stop-color="#DCC08A"/>
+    </linearGradient>
+    <symbol id="i-dash" viewBox="0 0 24 24"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></symbol>
+    <symbol id="i-calc" viewBox="0 0 24 24"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-buoy" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/><circle cx="12" cy="12" r="4"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></symbol>
+    <symbol id="i-filepen" viewBox="0 0 24 24"><path d="M12.5 22H18a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v9.5"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M13.378 15.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z"/></symbol>
+    <symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="i-chevdown" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-chevupdown" viewBox="0 0 24 24"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></symbol>
+    <symbol id="i-car" viewBox="0 0 24 24"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
+    <symbol id="i-arrowleft" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></symbol>
+    <symbol id="i-swap" viewBox="0 0 24 24"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></symbol>
+    <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></symbol>
+  </defs>
+</svg>
+
+<main class="deck">
+  <header class="deck-head">
+    <h1>Apólice — Conceito A · Institucional premium</h1>
+    <p>Quatro telas em 1440 px e o dashboard em 390 px · dados fictícios</p>
+  </header>
+
+  <!-- =========================================================
+       1. LOGIN
+  ========================================================== -->
+  <figure class="shot">
+    <figcaption>1 · Login com personas de demonstração</figcaption>
+    <section class="screen screen--desk" id="login" aria-label="Tela de login">
+      <div class="login">
+        <div class="login__brandside on-navy">
+          <svg class="login__engrave" data-engrave="rosette-xl" aria-hidden="true"></svg>
+          <div class="brand">
+            <svg class="brand__mark" data-mark aria-hidden="true"></svg>
+            <span class="brand__word">Apólice</span>
+          </div>
+          <h1 class="login__headline">Da cotação ao sinistro, cada apólice com histórico completo.</h1>
+          <p class="login__lede">Plataforma de operação para corretoras: cálculo de prêmio auditável, emissão de Auto, Residencial e Vida, endossos, cancelamentos e regulação de sinistros.</p>
+
+          <div class="specimen" aria-label="Exemplo de apólice">
+            <div class="specimen__row">
+              <span class="specimen__prod"><svg class="ic ic-sm"><use href="#i-car"/></svg>Seguro Auto</span>
+              <span class="badge badge--on-navy">Ativa</span>
+            </div>
+            <div class="specimen__num">AUTO-2026-000042</div>
+            <div class="specimen__who">Rafael N. Castro · Toyota Corolla Cross XRE 2025</div>
+            <div class="term">
+              <div class="term__bar"><i style="width:60.3%"></i></div>
+              <div class="term__labels"><span>15/03/2026</span><span>220 de 365 dias</span><span>15/03/2027</span></div>
+            </div>
+            <div class="specimen__foot">
+              <div><span class="lbl">Prêmio total</span><div class="fig"><span class="u">R$</span>4.862<span class="c">,38</span></div></div>
+              <div style="text-align:right"><span class="lbl">Parcelamento</span><span class="val">10x de R$ 486,24</span></div>
+            </div>
+          </div>
+          <div class="login__legal"><span>Projeto de portfólio</span><span>Dados fictícios</span><span>v1.0 · out/2026</span></div>
+        </div>
+
+        <div class="login__formside">
+          <nav class="login__topnav" aria-label="Links auxiliares">
+            <a href="#">Sobre o projeto</a><a href="#">Código no GitHub</a>
+          </nav>
+          <div class="login__col">
+            <h2 class="login__title">Entrar</h2>
+            <p class="login__intro">Escolha uma persona para explorar a plataforma com dados de demonstração, ou acesse com e-mail e senha.</p>
+
+            <fieldset class="personas">
+              <legend>Entrar como <span>Acesso de demonstração</span></legend>
+              <div class="persona-list">
+                <a class="persona is-hover" href="#">
+                  <span class="avatar avatar--navy">AR</span>
+                  <span><b>Ana Ribeiro</b> <span class="role">· Corretora</span><span class="scope">Carteira completa, cotação e emissão de apólices</span></span>
+                  <svg class="ic go"><use href="#i-arrow"/></svg>
+                </a>
+                <a class="persona" href="#">
+                  <span class="avatar avatar--steel">BL</span>
+                  <span><b>Bruno Lima</b> <span class="role">· Corretor</span><span class="scope">Somente a própria carteira, sem acesso ao Admin</span></span>
+                  <svg class="ic go"><use href="#i-arrow"/></svg>
+                </a>
+                <a class="persona" href="#">
+                  <span class="avatar avatar--gold">CS</span>
+                  <span><b>Carla Souza</b> <span class="role">· Analista de sinistros</span><span class="scope">Regulação, documentos e pagamento de sinistros</span></span>
+                  <svg class="ic go"><use href="#i-arrow"/></svg>
+                </a>
+                <a class="persona" href="#">
+                  <span class="avatar avatar--dark">DM</span>
+                  <span><b>Diego Martins</b> <span class="role">· Admin</span><span class="scope">Usuários, tabelas de tarifa e trilha de auditoria</span></span>
+                  <svg class="ic go"><use href="#i-arrow"/></svg>
+                </a>
+              </div>
+            </fieldset>
+
+            <div class="divider">ou com e-mail e senha</div>
+
+            <form onsubmit="return false">
+              <div class="field">
+                <label for="em">E-mail</label>
+                <div class="input"><svg class="ic ic-sm"><use href="#i-mail"/></svg><span class="ph">nome@corretora.com.br</span></div>
+              </div>
+              <div class="field">
+                <div class="row-between"><label for="pw">Senha</label><a class="link" href="#">Esqueci minha senha</a></div>
+                <div class="input"><svg class="ic ic-sm"><use href="#i-lock"/></svg><span class="ph">Mínimo de 8 caracteres</span><svg class="ic ic-sm" style="margin-left:auto"><use href="#i-eye"/></svg></div>
+              </div>
+              <div class="row-between" style="margin-top:16px">
+                <span class="check"><i></i>Manter conectado neste dispositivo</span>
+              </div>
+              <button class="btn btn--primary btn--lg" style="width:100%;margin-top:20px">Entrar</button>
+            </form>
+            <p class="login__note"><svg class="ic ic-sm" style="margin-top:1px"><use href="#i-info"/></svg>Ambiente de demonstração. Nenhum dado pessoal real é armazenado; os registros são recriados diariamente.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </figure>
+
+  <!-- =========================================================
+       2. DASHBOARD
+  ========================================================== -->
+  <figure class="shot">
+    <figcaption>2 · Dashboard da corretora</figcaption>
+    <section class="screen screen--desk" id="dashboard" aria-label="Dashboard">
+      <div class="app">
+        <aside class="side on-navy" data-side="dash"></aside>
+        <div class="main">
+          <div class="topbar">
+            <div class="search"><svg class="ic ic-sm"><use href="#i-search"/></svg>Buscar apólice, segurado, CPF ou placa<kbd>⌘ K</kbd></div>
+            <div class="topbar__right">
+              <span class="env">Demonstração</span>
+              <a class="iconbtn" href="#" aria-label="Ajuda"><svg class="ic"><use href="#i-help"/></svg></a>
+              <a class="iconbtn" href="#" aria-label="Notificações, 3 novas"><svg class="ic"><use href="#i-bell"/></svg><span class="dot"></span></a>
+            </div>
+          </div>
+          <div class="page">
+            <div class="page-head">
+              <div>
+                <h1 class="page-title">Visão da carteira</h1>
+                <p class="page-sub">Quarta-feira, 21 de outubro de 2026 · Ribeiro &amp; Associados Corretora</p>
+              </div>
+              <div style="display:flex;gap:8px">
+                <a class="btn btn--secondary" href="#"><svg class="ic ic-sm"><use href="#i-download"/></svg>Exportar</a>
+                <a class="btn btn--primary" href="#"><svg class="ic ic-sm"><use href="#i-plus"/></svg>Nova cotação</a>
+              </div>
+            </div>
+
+            <section class="card kpis" aria-label="Indicadores">
+              <div class="kpi">
+                <div class="kpi__label">Apólices ativas</div>
+                <div class="kpi__value fig">1.284</div>
+                <div class="kpi__meta"><span class="delta-up"><svg class="ic ic-xs"><use href="#i-up"/></svg>38</span> novas no mês</div>
+              </div>
+              <div class="kpi">
+                <div class="kpi__label">Prêmio de outubro</div>
+                <div class="kpi__value fig"><span class="u">R$</span>286,9<span class="u-after">mil</span></div>
+                <div class="kpi__meta"><span class="delta-up"><svg class="ic ic-xs"><use href="#i-up"/></svg>6,1%</span> vs. 1–21/set</div>
+              </div>
+              <div class="kpi">
+                <div class="kpi__label">Cotações em aberto</div>
+                <div class="kpi__value fig">57</div>
+                <div class="kpi__meta"><span class="delta-warn">12</span> expiram em 48 h</div>
+              </div>
+              <div class="kpi">
+                <div class="kpi__label">Conversão em 90 dias</div>
+                <div class="kpi__value fig">31,6<span class="u-after">%</span></div>
+                <div class="kpi__meta">182 de 576 cotações</div>
+              </div>
+              <div class="kpi">
+                <div class="kpi__label">Sinistros em aberto</div>
+                <div class="kpi__value fig">23</div>
+                <div class="kpi__meta"><span class="delta-warn">4</span> sem documentos</div>
+              </div>
+              <div class="kpi">
+                <div class="kpi__label">Sinistralidade 12m</div>
+                <div class="kpi__value fig">54,2<span class="u-after">%</span></div>
+                <div class="meter" role="img" aria-label="54,2% de sinistralidade; meta até 60%"><i style="width:54.2%"></i><b style="left:60%"></b></div>
+                <div class="kpi__meta">Meta até 60%</div>
+              </div>
+            </section>
+
+            <div class="grid-12">
+              <section class="card span-8">
+                <div class="card__head">
+                  <div>
+                    <h2 class="card__title">Prêmio emitido</h2>
+                    <p class="card__sub">Últimos 12 meses fechados · em R$ mil</p>
+                  </div>
+                  <div class="chart-total">
+                    <div class="fig"><span class="u">R$</span>4,08<span class="u-after">mi</span></div>
+                    <small><span class="delta-up">+14,2%</span> vs. 12 meses anteriores</small>
+                  </div>
+                </div>
+                <div style="padding:8px 24px 18px">
+                  <svg class="chart-svg" data-chart="desk" viewBox="0 0 685 300" width="100%" role="img" aria-label="Prêmio emitido por mês, de outubro de 2025 a setembro de 2026. Pico em setembro de 2026, com R$ 412 mil."></svg>
+                </div>
+              </section>
+
+              <section class="card span-4">
+                <div class="card__head">
+                  <div>
+                    <h2 class="card__title">Distribuição por produto</h2>
+                    <p class="card__sub">Prêmio emitido em 12 meses</p>
+                  </div>
+                </div>
+                <div class="stack" role="img" aria-label="Auto 58%, Residencial 17%, Vida 25%">
+                  <i style="width:58%;background:#24508F"></i><i style="width:17%;background:#5E93CF"></i><i style="width:25%;background:#B5862F"></i>
+                </div>
+                <div class="prod-list">
+                  <div class="prod"><span class="swatch" style="background:#24508F"></span><div><b>Auto</b><span>742 apólices · 58%</span></div><div class="val"><span class="fig"><span class="u">R$</span>2,37<span class="u-after">mi</span></span></div></div>
+                  <div class="prod"><span class="swatch" style="background:#5E93CF"></span><div><b>Residencial</b><span>389 apólices · 17%</span></div><div class="val"><span class="fig"><span class="u">R$</span>0,69<span class="u-after">mi</span></span></div></div>
+                  <div class="prod"><span class="swatch" style="background:#B5862F"></span><div><b>Vida</b><span>153 apólices · 25%</span></div><div class="val"><span class="fig"><span class="u">R$</span>1,02<span class="u-after">mi</span></span></div></div>
+                </div>
+                <div class="prod-foot">
+                  <div><span>Ticket Auto</span><b>R$ 3.194</b></div>
+                  <div><span>Ticket Resid.</span><b>R$ 1.774</b></div>
+                  <div><span>Ticket Vida</span><b>R$ 6.667</b></div>
+                </div>
+              </section>
+
+              <section class="card span-8">
+                <div class="card__head">
+                  <div>
+                    <h2 class="card__title">Atividades recentes</h2>
+                    <p class="card__sub">Emissões, cotações, endossos e sinistros da sua carteira</p>
+                  </div>
+                  <a class="link" href="#">Ver histórico<svg class="ic ic-xs"><use href="#i-chev"/></svg></a>
+                </div>
+                <div class="feed">
+                  <div class="feed__row">
+                    <span class="chip chip--navy"><svg class="ic"><use href="#i-shield"/></svg></span>
+                    <div><div class="feed__text">Apólice <a href="#">AUTO-2026-000318</a> emitida para Marcelo Tavares</div><div class="feed__meta">Jeep Compass Longitude 2025 · prêmio R$ 3.412,60 em 6x</div></div>
+                    <div class="feed__time"><b>14:32</b>hoje</div>
+                  </div>
+                  <div class="feed__row">
+                    <span class="chip chip--steel"><svg class="ic"><use href="#i-calc"/></svg></span>
+                    <div><div class="feed__text">Cotação <a href="#">COT-2026-004811</a> aceita por Juliana Prado</div><div class="feed__meta">Residencial · apartamento em Salvador/BA · aguardando emissão</div></div>
+                    <div class="feed__time"><b>13:05</b>hoje</div>
+                  </div>
+                  <div class="feed__row">
+                    <span class="chip chip--warn"><svg class="ic"><use href="#i-buoy"/></svg></span>
+                    <div><div class="feed__text">Sinistro <a href="#">SIN-2026-000097</a> aberto na apólice <a href="#">AUTO-2026-000042</a></div><div class="feed__meta">Colisão parcial · Rafael N. Castro · em regulação com Carla Souza</div></div>
+                    <div class="feed__time"><b>11:47</b>hoje</div>
+                  </div>
+                  <div class="feed__row">
+                    <span class="chip chip--gold"><svg class="ic"><use href="#i-filepen"/></svg></span>
+                    <div><div class="feed__text">Endosso nº 2 aplicado em <a href="#">VIDA-2026-000077</a></div><div class="feed__meta">Inclusão de beneficiário · sem alteração de prêmio</div></div>
+                    <div class="feed__time"><b>10:20</b>hoje</div>
+                  </div>
+                  <div class="feed__row">
+                    <span class="chip chip--bad"><svg class="ic"><use href="#i-receipt"/></svg></span>
+                    <div><div class="feed__text">Parcela 3/10 em atraso em <a href="#">RES-2026-000154</a></div><div class="feed__meta">Gustavo Ferraz · R$ 186,40 · venceu em 15/10/2026</div></div>
+                    <div class="feed__time"><b>17:58</b>ontem</div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="card span-4">
+                <div class="card__head">
+                  <div>
+                    <h2 class="card__title">Renovações em 30 dias</h2>
+                    <p class="card__sub">Vigências que terminam até 20/11/2026</p>
+                  </div>
+                </div>
+                <div class="renew-sum"><span class="fig">46</span><span>apólices · R$ 152,4 mil em prêmio</span></div>
+                <div class="renew-list">
+                  <div class="renew"><div><b>Patrícia Menezes</b><span>AUTO-2025-000981</span></div><div class="r"><b>R$ 3.920,10</b><span>vence 28/10</span></div></div>
+                  <div class="renew"><div><b>Helena Duarte</b><span>VIDA-2025-000063</span></div><div class="r"><b>R$ 2.640,00</b><span>vence 05/11</span></div></div>
+                  <div class="renew"><div><b>Rodrigo Saldanha</b><span>AUTO-2025-001014</span></div><div class="r"><b>R$ 4.215,70</b><span>vence 09/11</span></div></div>
+                  <div class="renew"><div><b>Carolina Bastos</b><span>RES-2025-000437</span></div><div class="r"><b>R$ 1.184,00</b><span>vence 12/11</span></div></div>
+                </div>
+                <div style="padding:6px 24px 22px"><a class="btn btn--secondary" style="width:100%" href="#">Ver todas as renovações</a></div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </figure>
+
+  <!-- =========================================================
+       3. DETALHE DA APÓLICE
+  ========================================================== -->
+  <figure class="shot">
+    <figcaption>3 · Detalhe da apólice AUTO-2026-000042</figcaption>
+    <section class="screen screen--desk" id="apolice" aria-label="Detalhe da apólice">
+      <div class="app">
+        <aside class="side on-navy" data-side="apolices"></aside>
+        <div class="main">
+          <div class="topbar">
+            <div class="search"><svg class="ic ic-sm"><use href="#i-search"/></svg>Buscar apólice, segurado, CPF ou placa<kbd>⌘ K</kbd></div>
+            <div class="topbar__right">
+              <span class="env">Demonstração</span>
+              <a class="iconbtn" href="#" aria-label="Ajuda"><svg class="ic"><use href="#i-help"/></svg></a>
+              <a class="iconbtn" href="#" aria-label="Notificações, 3 novas"><svg class="ic"><use href="#i-bell"/></svg><span class="dot"></span></a>
+            </div>
+          </div>
+          <div class="page">
+            <nav class="crumbs" aria-label="Trilha" style="margin-bottom:-8px">
+              <a href="#">Apólices</a><svg class="ic"><use href="#i-chev"/></svg><a href="#">Auto</a><svg class="ic"><use href="#i-chev"/></svg><b>AUTO-2026-000042</b>
+            </nav>
+
+            <section class="policy-face on-navy" aria-label="Resumo da apólice">
+              <div class="policy-face__band"></div>
+              <svg class="policy-face__engrave" data-engrave="rosette-lg" aria-hidden="true"></svg>
+              <div class="policy-face__top">
+                <div>
+                  <div class="policy-face__kind"><svg class="ic ic-sm"><use href="#i-car"/></svg>Seguro Auto <span>· Produto AUTO-PF v3 · emitida em 15/03/2026</span></div>
+                  <div class="policy-face__num"><h2>AUTO-2026-000042</h2><span class="badge badge--on-navy">Ativa</span></div>
+                  <div class="policy-face__who">
+                    <span>Segurado <b>Rafael Nogueira Castro</b></span>
+                    <span>CPF <b>***.482.917-**</b></span>
+                    <span>Veículo <b>Toyota Corolla Cross XRE 2.0 2025</b></span>
+                    <span>Placa <b>RFN3E47</b></span>
+                  </div>
+                </div>
+                <div class="policy-actions">
+                  <a class="btn btn--on-navy" href="#"><svg class="ic ic-sm"><use href="#i-download"/></svg>Baixar PDF</a>
+                  <a class="btn btn--light" href="#"><svg class="ic ic-sm"><use href="#i-filepen"/></svg>Endossar</a>
+                  <a class="btn btn--cancel" href="#"><svg class="ic ic-sm"><use href="#i-ban"/></svg>Cancelar</a>
+                </div>
+              </div>
+              <div class="policy-facts">
+                <div class="pfact">
+                  <div class="pfact__label">Vigência</div>
+                  <div class="pfact__value">15/03/2026 a 15/03/2027</div>
+                  <div class="term" style="margin-top:12px"><div class="term__bar"><i style="width:60.3%"></i></div></div>
+                  <div class="pfact__note">220 de 365 dias · renova em 145 dias</div>
+                </div>
+                <div class="pfact">
+                  <div class="pfact__label">Prêmio total</div>
+                  <div class="pfact__value fig"><span class="u">R$</span>4.862<span class="c">,38</span></div>
+                  <div class="pfact__note">Líquido R$ 4.528,20 + IOF</div>
+                </div>
+                <div class="pfact">
+                  <div class="pfact__label">Pagamento</div>
+                  <div class="pfact__value">10x de R$ 486,24</div>
+                  <div class="pfact__note">Débito em conta · 8/10 pagas</div>
+                </div>
+                <div class="pfact">
+                  <div class="pfact__label">Franquia do casco</div>
+                  <div class="pfact__value">R$ 4.870,00</div>
+                  <div class="pfact__note">Reduzida · 50% da obrigatória</div>
+                </div>
+              </div>
+            </section>
+
+            <div class="detail-grid">
+              <div style="display:flex;flex-direction:column;gap:24px">
+                <section class="card">
+                  <div class="card__head" style="padding-bottom:18px">
+                    <div>
+                      <h2 class="card__title">Coberturas contratadas</h2>
+                      <p class="card__sub">7 coberturas · Condições gerais Auto v3 (SUSEP de exemplo)</p>
+                    </div>
+                    <a class="link" href="#">Condições gerais<svg class="ic ic-xs"><use href="#i-chev"/></svg></a>
+                  </div>
+                  <table class="tbl">
+                    <thead><tr><th style="width:96px">Código</th><th>Cobertura</th><th class="num">LMI</th><th class="num">Prêmio</th></tr></thead>
+                    <tbody>
+                      <tr><td class="codecell">AU-001</td><td>Casco<span class="sub">Colisão, incêndio, roubo e furto · 100% FIPE</span></td><td class="num">R$ 162.430,00</td><td class="num">R$ 3.214,80</td></tr>
+                      <tr><td class="codecell">AU-010</td><td>RCF · Danos materiais<span class="sub">Danos causados a bens de terceiros</span></td><td class="num">R$ 150.000,00</td><td class="num">R$ 418,60</td></tr>
+                      <tr><td class="codecell">AU-011</td><td>RCF · Danos corporais<span class="sub">Lesões causadas a terceiros</span></td><td class="num">R$ 200.000,00</td><td class="num">R$ 296,40</td></tr>
+                      <tr><td class="codecell">AU-020</td><td>APP por passageiro<span class="sub">Morte ou invalidez permanente · 5 lugares</span></td><td class="num">R$ 30.000,00</td><td class="num">R$ 84,20</td></tr>
+                      <tr><td class="codecell">AU-030</td><td>Vidros, faróis e retrovisores<span class="sub">Reparo ou troca em rede referenciada</span></td><td class="num">R$ 6.500,00</td><td class="num">R$ 212,30</td></tr>
+                      <tr><td class="codecell">AU-040</td><td>Carro reserva<span class="sub">Categoria básica com ar-condicionado</span></td><td class="num">15 diárias</td><td class="num">R$ 168,90</td></tr>
+                      <tr><td class="codecell">AU-050</td><td>Assistência 24 h<span class="sub">Reboque, chaveiro, pane seca e troca de pneu</span></td><td class="num">400 km</td><td class="num">R$ 133,00</td></tr>
+                    </tbody>
+                    <tfoot>
+                      <tr><td></td><td colspan="2">Prêmio líquido</td><td class="num">R$ 4.528,20</td></tr>
+                      <tr><td></td><td colspan="2">IOF (7,38%)</td><td class="num">R$ 334,18</td></tr>
+                      <tr class="total"><td></td><td colspan="2" style="font-weight:600;font-size:15px;vertical-align:bottom">Prêmio total</td><td class="num"><span class="fig"><span class="u">R$</span>4.862<span class="c">,38</span></span></td></tr>
+                    </tfoot>
+                  </table>
+                </section>
+
+                <section class="card">
+                  <div class="card__head">
+                    <div>
+                      <h2 class="card__title">Cronograma de parcelas</h2>
+                      <p class="card__sub">Débito em conta no dia 15 · R$ 3.889,92 pagos de R$ 4.862,38</p>
+                    </div>
+                    <a class="link" href="#">Segunda via<svg class="ic ic-xs"><use href="#i-chev"/></svg></a>
+                  </div>
+                  <div class="sched" data-sched></div>
+                </section>
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:24px">
+                <section class="card">
+                  <div class="card__head">
+                    <div>
+                      <h2 class="card__title">Linha do tempo</h2>
+                      <p class="card__sub">Eventos registrados na apólice</p>
+                    </div>
+                  </div>
+                  <div class="tl">
+                    <div class="tl__item">
+                      <span class="tl__node tl__node--warn"><i></i></span>
+                      <div><div class="tl__when">21/10/2026 · 11:47</div><div class="tl__what">Sinistro <a href="#">SIN-2026-000097</a> aberto</div><div class="tl__desc">Colisão parcial na Av. Tancredo Neves, Salvador/BA. Regulação com Carla Souza.<br><span class="badge badge--warn">Em análise</span></div></div>
+                    </div>
+                    <div class="tl__item">
+                      <span class="tl__node tl__node--gold"><i></i></span>
+                      <div><div class="tl__when">12/06/2026 · 15:40</div><div class="tl__what">Endosso nº 1 emitido</div><div class="tl__desc">CEP de pernoite alterado de 40150-110 para 41820-021. Sem alteração de prêmio.</div></div>
+                    </div>
+                    <div class="tl__item">
+                      <span class="tl__node tl__node--steel"><i></i></span>
+                      <div><div class="tl__when">15/03/2026 · 09:13</div><div class="tl__what">E-mail de boas-vindas enviado</div><div class="tl__desc">Para rafael.castro@exemplo.com.br, com a apólice em PDF. Entregue.</div></div>
+                    </div>
+                    <div class="tl__item">
+                      <span class="tl__node tl__node--navy"><i></i></span>
+                      <div><div class="tl__when">15/03/2026 · 09:12</div><div class="tl__what">Apólice emitida</div><div class="tl__desc">A partir da cotação COT-2026-001187, por Ana Ribeiro.</div></div>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="card">
+                  <div class="card__head">
+                    <div><h2 class="card__title">Partes</h2></div>
+                  </div>
+                  <div class="docs">
+                    <div class="doc"><span class="avatar avatar--steel">RC</span><div><b>Rafael Nogueira Castro</b><span>Segurado e condutor principal · 41 anos</span></div></div>
+                    <div class="doc"><span class="avatar avatar--navy">AR</span><div><b>Ana Ribeiro</b><span>Corretora · Ribeiro &amp; Associados</span></div></div>
+                    <div class="doc"><span class="avatar avatar--gold">CS</span><div><b>Carla Souza</b><span>Analista do sinistro SIN-2026-000097</span></div></div>
+                  </div>
+                </section>
+
+                <section class="card">
+                  <div class="card__head">
+                    <div><h2 class="card__title">Documentos</h2></div>
+                  </div>
+                  <div class="docs">
+                    <div class="doc"><span class="doc__ic">PDF</span><div><b>Apólice AUTO-2026-000042</b><span>Emitida em 15/03/2026 · 248 KB</span></div><a class="iconbtn" href="#" aria-label="Baixar apólice"><svg class="ic ic-sm"><use href="#i-download"/></svg></a></div>
+                    <div class="doc"><span class="doc__ic">PDF</span><div><b>Endosso nº 1</b><span>12/06/2026 · 96 KB</span></div><a class="iconbtn" href="#" aria-label="Baixar endosso"><svg class="ic ic-sm"><use href="#i-download"/></svg></a></div>
+                    <div class="doc"><span class="doc__ic">PDF</span><div><b>Condições gerais Auto v3</b><span>Versão vigente na emissão · 1,2 MB</span></div><a class="iconbtn" href="#" aria-label="Baixar condições gerais"><svg class="ic ic-sm"><use href="#i-download"/></svg></a></div>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </figure>
+
+  <!-- =========================================================
+       4. NOVA COTAÇÃO — COBERTURAS
+  ========================================================== -->
+  <figure class="shot">
+    <figcaption>4 · Nova cotação, passo Coberturas</figcaption>
+    <section class="screen screen--desk" id="cotacao" aria-label="Nova cotação">
+      <div class="app">
+        <aside class="side on-navy" data-side="cotacoes"></aside>
+        <div class="main">
+          <div class="topbar">
+            <div class="search"><svg class="ic ic-sm"><use href="#i-search"/></svg>Buscar apólice, segurado, CPF ou placa<kbd>⌘ K</kbd></div>
+            <div class="topbar__right">
+              <span class="env">Demonstração</span>
+              <a class="iconbtn" href="#" aria-label="Ajuda"><svg class="ic"><use href="#i-help"/></svg></a>
+              <a class="iconbtn" href="#" aria-label="Notificações, 3 novas"><svg class="ic"><use href="#i-bell"/></svg><span class="dot"></span></a>
+            </div>
+          </div>
+          <div class="page">
+            <div class="page-head">
+              <div>
+                <nav class="crumbs" aria-label="Trilha"><a href="#">Cotações</a><svg class="ic"><use href="#i-chev"/></svg><b>COT-2026-004832</b></nav>
+                <h1 class="page-title">Nova cotação · Seguro Auto</h1>
+              </div>
+              <div style="display:flex;align-items:center;gap:14px">
+                <span style="font-size:13px;color:var(--ink-3);display:inline-flex;align-items:center;gap:6px"><svg class="ic ic-sm" style="color:var(--ok)"><use href="#i-check"/></svg>Rascunho salvo às 14:36</span>
+                <a class="btn btn--secondary" href="#">Salvar e sair</a>
+              </div>
+            </div>
+
+            <nav class="card stepper" aria-label="Etapas da cotação" style="overflow:hidden">
+              <div class="step is-done"><span class="step__dot"><svg class="ic ic-xs" style="width:14px;height:14px;stroke-width:2.4"><use href="#i-check"/></svg></span><div class="step__txt"><b>Produto</b><span>Auto · pessoa física</span></div></div>
+              <div class="step is-done"><span class="step__dot"><svg class="ic ic-xs" style="width:14px;height:14px;stroke-width:2.4"><use href="#i-check"/></svg></span><div class="step__txt"><b>Segurado</b><span>Lucas Andrade · 22 anos</span></div></div>
+              <div class="step is-done"><span class="step__dot"><svg class="ic ic-xs" style="width:14px;height:14px;stroke-width:2.4"><use href="#i-check"/></svg></span><div class="step__txt"><b>Risco</b><span>T-Cross 2024 · 41820-021</span></div></div>
+              <div class="step is-current" aria-current="step"><span class="step__dot">4</span><div class="step__txt"><b>Coberturas</b><span>Em edição</span></div></div>
+              <div class="step is-todo"><span class="step__dot">5</span><div class="step__txt"><b>Revisão</b><span>Conferência e emissão</span></div></div>
+            </nav>
+
+            <div class="quote-grid">
+              <section class="card">
+                <div class="card__head">
+                  <div>
+                    <h2 class="card__title" style="font-size:22px">Coberturas</h2>
+                    <p class="card__sub" style="font-size:13.5px;max-width:540px">VW T-Cross Highline 1.4 TSI 2024. Ative as coberturas e defina o limite máximo de indenização (LMI); o prêmio é recalculado a cada alteração.</p>
+                  </div>
+                  <span class="badge badge--neutral badge--plain">6 de 8 ativas</span>
+                </div>
+
+                <div class="cov-group">
+                  <h3>Cobertura principal <span>Prêmio base</span></h3>
+                  <div class="cov-row">
+                    <span class="toggle is-on" role="switch" aria-checked="true" aria-label="Casco"></span>
+                    <div><b>Casco</b><span class="desc">Colisão, incêndio, roubo e furto</span></div>
+                    <div><div class="select">100% da tabela FIPE<svg class="ic"><use href="#i-chevupdown"/></svg></div><div class="ctl-help">FIPE out/2026: R$ 141.900,00</div></div>
+                    <div class="price">R$ 2.310,00</div>
+                  </div>
+                </div>
+
+                <div class="cov-group">
+                  <h3>Responsabilidade civil facultativa <span></span></h3>
+                  <div class="cov-row">
+                    <span class="toggle is-on" role="switch" aria-checked="true" aria-label="Danos materiais"></span>
+                    <div><b>Danos materiais</b><span class="desc">Danos a veículos e bens de terceiros</span></div>
+                    <div><div class="select is-focus">R$ 100.000,00<svg class="ic"><use href="#i-chevupdown"/></svg></div><div class="ctl-help">Recomendado a partir de R$ 100 mil</div></div>
+                    <div class="price">R$ 342,00</div>
+                  </div>
+                  <div class="cov-row">
+                    <span class="toggle is-on" role="switch" aria-checked="true" aria-label="Danos corporais"></span>
+                    <div><b>Danos corporais</b><span class="desc">Lesões e despesas médicas de terceiros</span></div>
+                    <div><div class="select">R$ 100.000,00<svg class="ic"><use href="#i-chevupdown"/></svg></div></div>
+                    <div class="price">R$ 198,00</div>
+                  </div>
+                  <div class="cov-row is-off">
+                    <span class="toggle" role="switch" aria-checked="false" aria-label="Danos morais"></span>
+                    <div><b>Danos morais</b><span class="desc">Dano moral causado a terceiros</span></div>
+                    <div><div class="select is-disabled">R$ 10.000,00<svg class="ic"><use href="#i-chevupdown"/></svg></div></div>
+                    <div class="price">+ R$ 38,00<small>se ativada</small></div>
+                  </div>
+                </div>
+
+                <div class="cov-group" style="padding-bottom:8px">
+                  <h3>Complementares e assistência <span></span></h3>
+                  <div class="cov-row is-off">
+                    <span class="toggle" role="switch" aria-checked="false" aria-label="APP por passageiro"></span>
+                    <div><b>APP por passageiro</b><span class="desc">Morte ou invalidez · 5 lugares</span></div>
+                    <div><div class="select is-disabled">R$ 20.000,00<svg class="ic"><use href="#i-chevupdown"/></svg></div></div>
+                    <div class="price">+ R$ 64,00<small>se ativada</small></div>
+                  </div>
+                  <div class="cov-row">
+                    <span class="toggle is-on" role="switch" aria-checked="true" aria-label="Vidros"></span>
+                    <div><b>Vidros, faróis e retrovisores</b><span class="desc">Rede referenciada</span></div>
+                    <div><div class="select">Completa<svg class="ic"><use href="#i-chevupdown"/></svg></div></div>
+                    <div class="price">R$ 186,00</div>
+                  </div>
+                  <div class="cov-row">
+                    <span class="toggle is-on" role="switch" aria-checked="true" aria-label="Carro reserva"></span>
+                    <div><b>Carro reserva</b><span class="desc">Categoria básica, com ar</span></div>
+                    <div><div class="seg" role="radiogroup" aria-label="Diárias"><span>7 dias</span><span class="is-on" aria-checked="true">15 dias</span><span>30 dias</span></div></div>
+                    <div class="price">R$ 152,00</div>
+                  </div>
+                  <div class="cov-row">
+                    <span class="toggle is-on" role="switch" aria-checked="true" aria-label="Assistência 24 horas"></span>
+                    <div><b>Assistência 24 h</b><span class="desc">Reboque, chaveiro e pane seca</span></div>
+                    <div><div class="select">Reboque até 200 km<svg class="ic"><use href="#i-chevupdown"/></svg></div></div>
+                    <div class="price">R$ 98,00</div>
+                  </div>
+                </div>
+
+                <div class="wizard-nav">
+                  <a class="btn btn--ghost" href="#"><svg class="ic ic-sm"><use href="#i-arrowleft"/></svg>Voltar para Risco</a>
+                  <span style="margin-left:auto"></span>
+                  <a class="btn btn--secondary" href="#">Salvar rascunho</a>
+                  <a class="btn btn--primary" href="#">Revisar cotação<svg class="ic ic-sm"><use href="#i-arrow"/></svg></a>
+                </div>
+              </section>
+
+              <aside class="card calc" aria-label="Cálculo do prêmio">
+                <div class="calc__head">
+                  <div>
+                    <h2 class="card__title">Cálculo do prêmio</h2>
+                    <p class="card__sub">Tarifa Auto v2026.10</p>
+                  </div>
+                  <span class="live" style="margin-top:4px"><i></i>Ao vivo · 14:36:08</span>
+                </div>
+                <div class="calc__sec">
+                  <h4>Coberturas <span>prêmio base</span></h4>
+                  <div class="leader"><span>Casco</span><span class="dots"></span><span class="v">R$ 2.310,00</span></div>
+                  <div class="leader"><span>RCF danos materiais</span><span class="dots"></span><span class="v">R$ 342,00</span></div>
+                  <div class="leader"><span>RCF danos corporais</span><span class="dots"></span><span class="v">R$ 198,00</span></div>
+                  <div class="leader"><span>Vidros</span><span class="dots"></span><span class="v">R$ 186,00</span></div>
+                  <div class="leader"><span>Carro reserva 15 dias</span><span class="dots"></span><span class="v">R$ 152,00</span></div>
+                  <div class="leader"><span>Assistência 24 h</span><span class="dots"></span><span class="v">R$ 98,00</span></div>
+                  <div class="leader is-strong" style="margin-top:4px"><span>Subtotal</span><span class="dots"></span><span class="v">R$ 3.286,00</span></div>
+                </div>
+                <div class="calc__sec" style="padding-top:12px">
+                  <h4>Fatores aplicados <span>multiplicam o subtotal</span></h4>
+                  <div class="factor"><div><b>Condutor 18–25 anos</b><span>Condutor principal com 22 anos</span></div><span class="m">×1,40</span></div>
+                  <div class="factor"><div><b>Região de pernoite</b><span>CEP 41820-021 · Salvador/BA</span></div><span class="m">×1,12</span></div>
+                  <div class="factor"><div><b>Garagem em casa e no trabalho</b><span>Desconto por guarda do veículo</span></div><span class="m is-disc">×0,92</span></div>
+                  <div class="factor"><div><b>Bônus classe 3</b><span>Três anos sem sinistro</span></div><span class="m is-disc">×0,90</span></div>
+                </div>
+                <div class="calc__sub">
+                  <div class="leader"><span>Fator combinado</span><span class="dots"></span><span class="v" style="font-weight:600">×1,2983</span></div>
+                  <div class="leader is-strong"><span>Prêmio líquido</span><span class="dots"></span><span class="v">R$ 4.266,23</span></div>
+                  <div class="leader"><span>IOF 7,38%</span><span class="dots"></span><span class="v">R$ 314,85</span></div>
+                </div>
+                <div class="calc__total on-navy">
+                  <svg class="calc__total-engrave" data-engrave="rosette-sm" aria-hidden="true"></svg>
+                  <div class="lbl">Prêmio total</div>
+                  <div class="fig"><span class="u">R$</span>4.581<span class="c">,08</span></div>
+                  <div class="inst-line">ou até 10x de R$ 458,11 sem juros</div>
+                  <div class="valid">Cotação válida por 30 dias, até 20/11/2026</div>
+                </div>
+              </aside>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </figure>
+
+  <!-- =========================================================
+       5. DASHBOARD MOBILE (390)
+  ========================================================== -->
+  <figure class="shot">
+    <figcaption>5 · Dashboard em 390 px</figcaption>
+    <section class="screen screen--phone" id="dashboard-mobile" aria-label="Dashboard no celular">
+      <header class="m-top on-navy">
+        <a class="iconbtn" href="#" aria-label="Abrir menu"><svg class="ic"><use href="#i-menu"/></svg></a>
+        <div class="brand"><svg class="brand__mark" data-mark aria-hidden="true"></svg><span class="brand__word">Apólice</span></div>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:4px">
+          <a class="iconbtn" href="#" aria-label="Buscar"><svg class="ic"><use href="#i-search"/></svg></a>
+          <a class="iconbtn" href="#" aria-label="Notificações, 3 novas"><svg class="ic"><use href="#i-bell"/></svg><span class="dot" style="box-shadow:0 0 0 2px var(--navy-900)"></span></a>
+          <span class="avatar avatar--navy avatar--ring" style="width:32px;height:32px;font-size:12.5px;margin-left:4px">AR</span>
+        </div>
+      </header>
+      <div class="m-page">
+        <div>
+          <h1 class="m-title">Visão da carteira</h1>
+          <p class="page-sub" style="margin-top:4px;font-size:13px">Qua., 21/10/2026 · Ribeiro &amp; Associados</p>
+        </div>
+        <a class="btn btn--primary btn--lg" href="#" style="width:100%"><svg class="ic ic-sm"><use href="#i-plus"/></svg>Nova cotação</a>
+
+        <section class="card m-kpis" aria-label="Indicadores">
+          <div class="kpi"><div class="kpi__label">Apólices ativas</div><div class="kpi__value fig">1.284</div><div class="kpi__meta"><span class="delta-up"><svg class="ic ic-xs"><use href="#i-up"/></svg>38</span> no mês</div></div>
+          <div class="kpi"><div class="kpi__label">Prêmio em outubro</div><div class="kpi__value fig"><span class="u">R$</span>286,9<span class="u-after">mil</span></div><div class="kpi__meta"><span class="delta-up"><svg class="ic ic-xs"><use href="#i-up"/></svg>6,1%</span> vs. set</div></div>
+          <div class="kpi"><div class="kpi__label">Cotações em aberto</div><div class="kpi__value fig">57</div><div class="kpi__meta"><span class="delta-warn">12</span> expiram em 48 h</div></div>
+          <div class="kpi"><div class="kpi__label">Conversão 90 dias</div><div class="kpi__value fig">31,6<span class="u-after">%</span></div><div class="kpi__meta">182 de 576</div></div>
+          <div class="kpi"><div class="kpi__label">Sinistros em aberto</div><div class="kpi__value fig">23</div><div class="kpi__meta"><span class="delta-warn">4</span> sem documentos</div></div>
+          <div class="kpi"><div class="kpi__label">Sinistralidade 12m</div><div class="kpi__value fig">54,2<span class="u-after">%</span></div><div class="meter" style="margin-top:8px" role="img" aria-label="54,2%; meta até 60%"><i style="width:54.2%"></i><b style="left:60%"></b></div><div class="kpi__meta">Meta até 60%</div></div>
+        </section>
+
+        <section class="card">
+          <div class="m-card-head">
+            <div><h2 class="card__title">Prêmio emitido</h2><p class="card__sub">12 meses fechados · R$ mil</p></div>
+            <div class="chart-total"><div class="fig" style="font-size:22px"><span class="u">R$</span>4,08<span class="u-after">mi</span></div><small><span class="delta-up">+14,2%</span></small></div>
+          </div>
+          <div style="padding:6px 12px 12px 8px">
+            <svg class="chart-svg" data-chart="mobile" viewBox="0 0 338 196" width="100%" role="img" aria-label="Prêmio emitido por mês, outubro de 2025 a setembro de 2026"></svg>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="m-card-head"><div><h2 class="card__title">Distribuição por produto</h2><p class="card__sub">Prêmio emitido em 12 meses</p></div></div>
+          <div class="stack" style="margin:18px 16px 2px" role="img" aria-label="Auto 58%, Residencial 17%, Vida 25%"><i style="width:58%;background:#24508F"></i><i style="width:17%;background:#5E93CF"></i><i style="width:25%;background:#B5862F"></i></div>
+          <div class="prod-list" style="padding:4px 16px 6px">
+            <div class="prod"><span class="swatch" style="background:#24508F"></span><div><b>Auto</b><span>742 apólices · 58%</span></div><div class="val"><span class="fig"><span class="u">R$</span>2,37<span class="u-after">mi</span></span></div></div>
+            <div class="prod"><span class="swatch" style="background:#5E93CF"></span><div><b>Residencial</b><span>389 apólices · 17%</span></div><div class="val"><span class="fig"><span class="u">R$</span>0,69<span class="u-after">mi</span></span></div></div>
+            <div class="prod"><span class="swatch" style="background:#B5862F"></span><div><b>Vida</b><span>153 apólices · 25%</span></div><div class="val"><span class="fig"><span class="u">R$</span>1,02<span class="u-after">mi</span></span></div></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="m-card-head"><div><h2 class="card__title">Atividades recentes</h2></div><a class="link" href="#">Ver tudo</a></div>
+          <div class="feed" style="padding:6px 16px 4px">
+            <div class="feed__row" style="grid-template-columns:36px 1fr"><span class="chip chip--navy"><svg class="ic"><use href="#i-shield"/></svg></span><div><div class="feed__text">Apólice <a href="#">AUTO-2026-000318</a> emitida</div><div class="feed__meta">Marcelo Tavares · R$ 3.412,60 · 14:32</div></div></div>
+            <div class="feed__row" style="grid-template-columns:36px 1fr"><span class="chip chip--steel"><svg class="ic"><use href="#i-calc"/></svg></span><div><div class="feed__text">Cotação <a href="#">COT-2026-004811</a> aceita</div><div class="feed__meta">Juliana Prado · Residencial · 13:05</div></div></div>
+            <div class="feed__row" style="grid-template-columns:36px 1fr"><span class="chip chip--warn"><svg class="ic"><use href="#i-buoy"/></svg></span><div><div class="feed__text">Sinistro <a href="#">SIN-2026-000097</a> aberto</div><div class="feed__meta">AUTO-2026-000042 · colisão parcial · 11:47</div></div></div>
+            <div class="feed__row" style="grid-template-columns:36px 1fr"><span class="chip chip--gold"><svg class="ic"><use href="#i-filepen"/></svg></span><div><div class="feed__text">Endosso nº 2 em <a href="#">VIDA-2026-000077</a></div><div class="feed__meta">Inclusão de beneficiário · 10:20</div></div></div>
+          </div>
+        </section>
+      </div>
+      <nav class="m-tabs" aria-label="Navegação principal">
+        <a class="m-tab is-active" href="#" aria-current="page"><svg class="ic"><use href="#i-dash"/></svg>Início</a>
+        <a class="m-tab" href="#"><svg class="ic"><use href="#i-calc"/></svg>Cotações</a>
+        <a class="m-tab" href="#"><svg class="ic"><use href="#i-shield"/></svg>Apólices</a>
+        <a class="m-tab" href="#"><svg class="ic"><use href="#i-buoy"/></svg>Sinistros</a>
+        <a class="m-tab" href="#"><svg class="ic"><use href="#i-more"/></svg>Mais</a>
+      </nav>
+    </section>
+  </figure>
+</main>
+
+<script>
+(() => {
+  const NS = 'http://www.w3.org/2000/svg';
+  const TAU = Math.PI * 2;
+
+  /* ---------- Gravura (guilloché): curvas paramétricas exatas ---------- */
+  function ring(cx, cy, R, a, n, b, m, copies, steps = 900) {
+    const out = [];
+    for (let j = 0; j < copies; j++) {
+      const rot = (j / copies) * (TAU / n);
+      let d = '';
+      for (let s = 0; s <= steps; s++) {
+        const t = (s / steps) * TAU;
+        const r = R + a * Math.sin(n * t) + b * Math.sin(m * t + j * 0.9);
+        const x = cx + r * Math.cos(t + rot);
+        const y = cy + r * Math.sin(t + rot);
+        d += (s ? 'L' : 'M') + x.toFixed(2) + ' ' + y.toFixed(2);
+      }
+      out.push(d + 'Z');
+    }
+    return out;
+  }
+  function paint(svg, size, layers, stroke, width, opacity) {
+    svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+    const g = document.createElementNS(NS, 'g');
+    g.setAttribute('fill', 'none');
+    g.setAttribute('stroke', stroke);
+    g.setAttribute('stroke-width', width);
+    g.setAttribute('opacity', opacity);
+    layers.flat().forEach(d => { const p = document.createElementNS(NS, 'path'); p.setAttribute('d', d); g.appendChild(p); });
+    svg.appendChild(g);
+  }
+  const engravings = {
+    'rosette-xl': svg => { const c = 380; paint(svg, 760, [
+      ring(c, c, 96, 22, 12, 6, 24, 10), ring(c, c, 178, 26, 24, 8, 48, 12),
+      ring(c, c, 262, 18, 36, 7, 72, 12), ring(c, c, 330, 12, 48, 5, 96, 8)
+    ], '#C9A86A', 0.7, 0.30); },
+    'rosette-lg': svg => { const c = 260; paint(svg, 520, [
+      ring(c, c, 70, 16, 12, 4, 24, 9), ring(c, c, 128, 20, 24, 6, 48, 11), ring(c, c, 196, 14, 36, 5, 72, 10)
+    ], '#C9A86A', 0.6, 0.22); },
+    'rosette-sm': svg => { const c = 130; paint(svg, 260, [
+      ring(c, c, 44, 10, 10, 3, 20, 8), ring(c, c, 84, 12, 20, 4, 40, 10)
+    ], '#C9A86A', 0.6, 0.26); },
+  };
+  document.querySelectorAll('[data-engrave]').forEach(svg => engravings[svg.dataset.engrave]?.(svg));
+
+  /* ---------- Marca: selo gravado ---------- */
+  document.querySelectorAll('[data-mark]').forEach(svg => {
+    svg.setAttribute('viewBox', '0 0 32 32');
+    const g = document.createElementNS(NS, 'g');
+    g.setAttribute('fill', 'none'); g.setAttribute('stroke', 'url(#foil)');
+    const outer = document.createElementNS(NS, 'circle');
+    outer.setAttribute('cx', 16); outer.setAttribute('cy', 16); outer.setAttribute('r', 15); outer.setAttribute('stroke-width', 1.4);
+    g.appendChild(outer);
+    ring(16, 16, 9.2, 2.6, 8, 0, 1, 3, 400).forEach(d => { const p = document.createElementNS(NS, 'path'); p.setAttribute('d', d); p.setAttribute('stroke-width', 0.85); g.appendChild(p); });
+    const inner = document.createElementNS(NS, 'circle');
+    inner.setAttribute('cx', 16); inner.setAttribute('cy', 16); inner.setAttribute('r', 3); inner.setAttribute('stroke-width', 1.2);
+    g.appendChild(inner);
+    svg.appendChild(g);
+  });
+
+  /* ---------- Navegação lateral ---------- */
+  const navItems = [
+    ['dash', 'Dashboard', 'i-dash', ''],
+    ['cotacoes', 'Cotações', 'i-calc', '57'],
+    ['apolices', 'Apólices', 'i-shield', '1.284'],
+    ['sinistros', 'Sinistros', 'i-buoy', '23'],
+    ['admin', 'Admin', 'i-sliders', 'lock'],
+  ];
+  document.querySelectorAll('[data-side]').forEach(side => {
+    const active = side.dataset.side;
+    const items = navItems.map(([id, label, icon, count]) => {
+      const cls = ['nav__item', id === active ? 'is-active' : '', count === 'lock' ? 'is-locked' : ''].join(' ');
+      const tail = count === 'lock'
+        ? '<svg class="ic lock" aria-label="Restrito ao perfil Admin"><use href="#i-lock"/></svg>'
+        : count ? `<span class="nav__count">${count}</span>` : '';
+      return `<a class="${cls}" href="#"${id === active ? ' aria-current="page"' : ''}><svg class="ic"><use href="#${icon}"/></svg>${label}${tail}</a>`;
+    }).join('');
+    side.innerHTML = `
+      <div class="brand"><svg class="brand__mark" data-mark-late aria-hidden="true"></svg><span class="brand__word">Apólice</span></div>
+      <div class="side__org"><div><b>Ribeiro &amp; Associados</b><span>Corretora de seguros</span></div><svg class="ic ic-sm" style="color:var(--on-navy-3)"><use href="#i-chevupdown"/></svg></div>
+      <nav class="nav" aria-label="Principal">${items}<div class="nav__sep"></div>
+        <a class="nav__item" href="#"><svg class="ic"><use href="#i-info"/></svg>Sobre o projeto</a></nav>
+      <div class="side__user"><span class="avatar avatar--navy avatar--ring">AR</span><div><b>Ana Ribeiro</b><span>Corretora</span></div>
+        <a class="switch" href="#" aria-label="Trocar persona"><svg class="ic ic-sm"><use href="#i-swap"/></svg></a></div>`;
+  });
+  document.querySelectorAll('[data-mark-late]').forEach(svg => {
+    svg.setAttribute('viewBox', '0 0 32 32');
+    svg.innerHTML = document.querySelector('[data-mark]').innerHTML;
+  });
+
+  /* ---------- Cronograma de parcelas ---------- */
+  const months = ['03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
+  const paidOn = ['15/03', '14/04', '15/05', '13/06', '15/07', '14/08', '15/09', '13/10'];
+  const sched = document.querySelector('[data-sched]');
+  if (sched) sched.innerHTML = months.map((mm, i) => {
+    const n = i + 1, val = n === 10 ? '486,22' : '486,24';
+    const state = n <= 8 ? 'is-paid' : n === 9 ? 'is-next' : 'is-open';
+    const status = n <= 8 ? `Paga em ${paidOn[i]}` : n === 9 ? 'Próxima' : 'A vencer';
+    const icon = n <= 8 ? '<svg class="ic ic-xs"><use href="#i-check"/></svg>' : '';
+    return `<div class="inst ${state}"><div class="inst__n">${n}/10${icon}</div><div class="inst__d">15/${mm}/2026</div><div class="inst__v">R$ ${val}</div><div class="inst__s">${status}</div></div>`;
+  }).join('');
+
+  /* ---------- Gráfico de prêmio emitido ---------- */
+  const data = [284, 298, 341, 276, 305, 322, 358, 347, 369, 391, 377, 412];
+  const labels = ['out', 'nov', 'dez', 'jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set'];
+  function barPath(x, base, top, w, r) {
+    return `M${x},${base}V${top + r}Q${x},${top} ${x + r},${top}H${x + w - r}Q${x + w},${top} ${x + w},${top + r}V${base}Z`;
+  }
+  function chart(svg, o) {
+    const { W, H, padL, padR, padT, padB, barW, font, ticks, yMax, tip, years } = o;
+    const plotW = W - padL - padR, plotH = H - padT - padB, base = padT + plotH, slot = plotW / data.length;
+    let s = '';
+    ticks.forEach(t => {
+      const y = base - (t / yMax) * plotH;
+      s += `<line x1="${padL}" x2="${W - padR}" y1="${y}" y2="${y}" stroke="${t === 0 ? '#C9D0DA' : '#E9EDF2'}" stroke-width="1"/>`;
+      s += `<text x="${padL - 10}" y="${y + 4}" text-anchor="end" font-size="${font}" fill="#5D697D">${t}</text>`;
+    });
+    const avg = data.reduce((a, b) => a + b, 0) / data.length;
+    const ay = base - (avg / yMax) * plotH;
+    s += `<line x1="${padL}" x2="${W - padR}" y1="${ay}" y2="${ay}" stroke="#7A5C2C" stroke-width="1" stroke-dasharray="3 4" opacity=".75"/>`;
+    s += `<text x="${padL + 6}" y="${ay - 7}" font-size="${font}" fill="#7A5C2C" font-weight="600">Média ${Math.round(avg)}</text>`;
+    data.forEach((v, i) => {
+      const x = padL + i * slot + (slot - barW) / 2, top = base - (v / yMax) * plotH;
+      const last = i === data.length - 1;
+      s += `<path d="${barPath(x, base, top, barW, 4)}" fill="${last ? '#B5862F' : '#1D3B6B'}"><title>${labels[i]}: R$ ${v} mil</title></path>`;
+      s += `<text x="${x + barW / 2}" y="${base + font + 8}" text-anchor="middle" font-size="${font}" fill="${last ? '#0E1A2C' : '#5D697D'}" font-weight="${last ? 700 : 400}">${labels[i]}</text>`;
+    });
+    if (years) {
+      s += `<text x="${padL + slot / 2}" y="${base + font * 2 + 14}" text-anchor="middle" font-size="${font - 1}" fill="#5D697D">2025</text>`;
+      s += `<text x="${padL + 3 * slot + slot / 2}" y="${base + font * 2 + 14}" text-anchor="middle" font-size="${font - 1}" fill="#5D697D">2026</text>`;
+    }
+    if (tip) {
+      const i = data.length - 1, x = padL + i * slot + slot / 2, top = base - (data[i] / yMax) * plotH;
+      const tw = 168, th = 58, tx = x - tw + 18, ty = top - th - 12;
+      s += `<g filter="url(#tipShadow)"><rect x="${tx}" y="${ty}" width="${tw}" height="${th}" rx="8" fill="#0B1F3A"/></g>`;
+      s += `<path d="M${x - 6},${ty + th} L${x},${ty + th + 6} L${x + 6},${ty + th} Z" fill="#0B1F3A"/>`;
+      s += `<text x="${tx + 14}" y="${ty + 22}" font-size="12" fill="#B8C3D6">set/2026 · 96 apólices</text>`;
+      s += `<text x="${tx + 14}" y="${ty + 44}" font-size="17" fill="#FFFFFF" font-weight="600" font-family="Source Serif 4, Georgia, serif">R$ 412,0 mil</text>`;
+    }
+    svg.innerHTML = `<defs><filter id="tipShadow" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#071427" flood-opacity=".25"/></filter></defs>` + s;
+  }
+  document.querySelectorAll('[data-chart="desk"]').forEach(svg => chart(svg, { W: 685, H: 300, padL: 40, padR: 4, padT: 70, padB: 46, barW: 26, font: 12, ticks: [0, 150, 300, 450], yMax: 450, tip: true, years: true }));
+  document.querySelectorAll('[data-chart="mobile"]').forEach(svg => chart(svg, { W: 338, H: 196, padL: 34, padR: 2, padT: 18, padB: 40, barW: 14, font: 11, ticks: [0, 150, 300, 450], yMax: 450, tip: false, years: true }));
+})();
+</script>
+</body>
+</html>
