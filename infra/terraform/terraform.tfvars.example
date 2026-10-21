@@ -1,0 +1,21 @@
+# Copie para terraform.tfvars (ignorado pelo git). Todos os valores abaixo já são os padrões;
+# só declare o que precisar mudar.
+
+aws_region  = "us-east-1"
+project     = "apolice"
+environment = "prod"
+
+# Pacotes gerados por `dotnet publish` + zip (caminhos relativos a infra/terraform).
+api_zip_path    = "../../artifacts/api.zip"
+worker_zip_path = "../../artifacts/worker.zip"
+
+github_repository = "LucasDEVBA/apolice"
+
+# false se a conta já tiver o OIDC provider token.actions.githubusercontent.com.
+create_github_oidc_provider = true
+
+alert_email        = "lucasdevba@gmail.com"
+monthly_budget_usd = 5
+
+# Teto de concorrência da API (null = sem reserva; 0 = API desligada). Ver README.
+# api_reserved_concurrency = 5

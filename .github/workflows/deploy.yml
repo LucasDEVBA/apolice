@@ -1,0 +1,289 @@
+name: Deploy
+
+# Produção só sai da ponta da main com o CI inteiro verde; o passo "Conferir commit" garante isso
+# para os dois gatilhos. O frontend não aparece aqui: a integração git da Vercel publica a partir
+# da mesma main.
+# Actions fixadas por SHA (com a versão no comentário, que o Dependabot atualiza): o job de deploy
+# assume a role de produção, então uma tag movida num repositório de terceiros não pode mudar
+# o código que roda aqui.
+on:
+  # O risco clássico do workflow_run (rodar código de fork com privilégio) é neutralizado pelo
+  # "if" do job, que exige push no próprio repositório.
+  workflow_run: # zizmor: ignore[dangerous-triggers]
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  # Republicar sem commit novo (o re-run de um run antigo expira em 30 dias). Não pula o CI: o
+  # passo "Conferir commit" exige CI verde no mesmo SHA.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Nunca cancelar um deploy em andamento: um terraform apply interrompido deixa o state travado.
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  DOTNET_NOLOGO: "1"
+  TERRAFORM_VERSION: "1.17.0"
+  # Publica exatamente o commit que o CI aprovou, não o que estiver na main quando o job rodar.
+  COMMIT_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+jobs:
+  # Compilar executa código de terceiros (targets MSBuild, analisadores e geradores dos pacotes
+  # NuGet). Por isso o build fica num job sem id-token: um pacote comprometido não consegue pedir
+  # o token OIDC de produção nem encontra credencial AWS no ambiente.
+  build:
+    name: Pacotes (sem privilégio)
+    # O filtro "branches" do workflow_run compara só o NOME da branch, e um PR de fork chamado
+    # "main" também casa. Exigir evento push no próprio repositório impede que código de
+    # terceiros chegue à role de produção.
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.COMMIT_SHA }}
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      # Sem cache do NuGet, de propósito: estes binários vão para produção, qualquer workflow da
+      # main consegue gravar no cache e, sem packages.lock.json, o restore não confere o conteúdo
+      # do que vem de lá.
+      # Lambda arm64 com o runtime gerenciado dotnet10: framework-dependent, sem apphost. A geração
+      # do OpenAPI fica desligada porque executaria um binário arm64 no runner x64.
+      # O migrator é um publish portátil (roda no x64 do runner) do mesmo commit: o job de deploy
+      # só o executa, sem restore nem compilação.
+      - name: Publicar Api, Worker e migrator
+        run: |
+          publicar_lambda() {
+            local projeto="$1" destino="$2"
+            local saida="$RUNNER_TEMP/publish/$destino"
+            dotnet publish "src/$projeto" -c Release -r linux-arm64 --self-contained false \
+              -p:UseAppHost=false -p:OpenApiGenerateDocuments=false -o "$saida"
+            (cd "$saida" && zip -qr "$GITHUB_WORKSPACE/artifacts/$destino.zip" .)
+          }
+          mkdir -p artifacts
+          publicar_lambda Apolice.Api api
+          publicar_lambda Apolice.Worker worker
+          dotnet publish src/Apolice.Worker -c Release -p:UseAppHost=false -o artifacts/migrator
+          ls -lh artifacts/*.zip
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: pacotes
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 7
+
+  deploy:
+    name: Produção (AWS)
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # O trust OIDC aceita qualquer job deste environment (o "sub" do token não carrega a branch);
+    # quem restringe à main é a regra "Deployment branches and tags" do environment no GitHub.
+    environment:
+      name: prod
+      url: ${{ vars.FRONTEND_URL || steps.tf.outputs.api_url }}
+    permissions:
+      id-token: write
+      contents: read
+      # Listar as execuções do CI no passo "Conferir commit".
+      actions: read
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+    steps:
+      # Antes de qualquer credencial, e aqui (não no build) porque um "re-run failed jobs" repete
+      # só este job. Ponta da main: o re-run de um run antigo republicaria código velho por cima
+      # de migrations que só avançam (voltar versão é revert na main). CI verde no SHA: o disparo
+      # manual não passa pelo workflow_run.
+      - name: Conferir commit (ponta da main com CI verde)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ponta="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq .sha)"
+          if [ "$ponta" != "$COMMIT_SHA" ]; then
+            echo "::error::$COMMIT_SHA não é mais a ponta da main ($ponta). Para voltar versão, faça revert na main."
+            exit 1
+          fi
+          verdes="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$COMMIT_SHA&branch=main&event=push&status=success&per_page=1" --jq .total_count)"
+          if [ "$verdes" -eq 0 ]; then
+            echo "::error::O commit $COMMIT_SHA não tem CI verde (push na main)."
+            exit 1
+          fi
+
+      # O checkout limpa o workspace, então os pacotes só descem depois dele.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.COMMIT_SHA }}
+          persist-credentials: false
+
+      # O v8 falha se o hash baixado divergir do registrado no upload.
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: pacotes
+          path: artifacts
+
+      # Só para ter o runtime que executa o migrator já compilado.
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      # OIDC: credenciais temporárias da role, sem chave de acesso guardada no GitHub.
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: apolice-deploy-${{ github.run_id }}
+
+      # Wrapper desligado: ele mistura linhas de debug no stdout e quebra o "terraform output -raw".
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      # A key fica sob "apolice/": a role de deploy só lê/grava esse prefixo do bucket de state
+      # (infra/terraform/github_oidc.tf); fora dele o init falharia com AccessDenied.
+      - name: Terraform init
+        working-directory: infra/terraform
+        env:
+          TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+        run: >-
+          terraform init -input=false
+          -backend-config="bucket=$TF_STATE_BUCKET"
+          -backend-config="key=apolice/prod/terraform.tfstate"
+          -backend-config="region=$AWS_REGION"
+          -backend-config="use_lockfile=true"
+          -backend-config="encrypt=true"
+
+      # aws_region explícito: o provider precisa apontar para a mesma região em que as
+      # migrations, o SSM e o smoke test vão procurar os recursos.
+      - name: Terraform apply
+        working-directory: infra/terraform
+        run: >-
+          terraform apply -auto-approve -input=false
+          -var="aws_region=$AWS_REGION"
+          -var="api_zip_path=$GITHUB_WORKSPACE/artifacts/api.zip"
+          -var="worker_zip_path=$GITHUB_WORKSPACE/artifacts/worker.zip"
+
+      - name: Ler outputs do Terraform
+        id: tf
+        working-directory: infra/terraform
+        run: |
+          # Atribuição separada do echo: com "set -e", um output ausente derruba o passo aqui
+          # em vez de seguir com valor vazio até as migrations.
+          dsql_endpoint="$(terraform output -raw dsql_endpoint)"
+          api_role_arn="$(terraform output -raw api_role_arn)"
+          worker_role_arn="$(terraform output -raw worker_role_arn)"
+          relay_role_arn="$(terraform output -raw relay_role_arn)"
+          queue_url="$(terraform output -raw queue_url)"
+          api_url="$(terraform output -raw api_function_url)"
+          seed_senha_parametro="$(terraform output -raw seed_senha_parametro)"
+          {
+            echo "dsql_endpoint=$dsql_endpoint"
+            echo "api_role_arn=$api_role_arn"
+            echo "worker_role_arn=$worker_role_arn"
+            echo "relay_role_arn=$relay_role_arn"
+            echo "queue_url=$queue_url"
+            echo "api_url=$api_url"
+            echo "seed_senha_parametro=$seed_senha_parametro"
+          } >> "$GITHUB_OUTPUT"
+
+      # Migrations e seed rodam do runner como "admin" do DSQL (IAM auth com a role do deploy);
+      # o migrator também cria o papel apolice_app e o vincula às roles das Lambdas.
+      # Mensageria igual à das Lambdas: sem ela o Worker cairia no padrão RabbitMq/localhost, e a
+      # validação das options na inicialização derrubaria o verbo. Nada é publicado daqui
+      # (Outbox:DispatchImediato=false); o relay agendado publica os eventos do seed no SQS.
+      # working-directory no publish: o content root é o diretório atual, onde estão os
+      # appsettings*.json.
+      - name: Migrations (Aurora DSQL)
+        working-directory: artifacts/migrator
+        env:
+          DOTNET_ENVIRONMENT: Production
+          Database__Provider: Dsql
+          Database__DsqlEndpoint: ${{ steps.tf.outputs.dsql_endpoint }}
+          Database__DsqlUser: admin
+          Database__AppRole: apolice_app
+          Database__AppRoleArns__0: ${{ steps.tf.outputs.api_role_arn }}
+          Database__AppRoleArns__1: ${{ steps.tf.outputs.worker_role_arn }}
+          Database__AppRoleArns__2: ${{ steps.tf.outputs.relay_role_arn }}
+          Messaging__Transport: Sqs
+          Messaging__Sqs__QueueUrl: ${{ steps.tf.outputs.queue_url }}
+          Outbox__DispatchImediato: "false"
+        run: dotnet Apolice.Worker.dll migrate
+
+      - name: Seed (Aurora DSQL)
+        working-directory: artifacts/migrator
+        env:
+          DOTNET_ENVIRONMENT: Production
+          Database__Provider: Dsql
+          Database__DsqlEndpoint: ${{ steps.tf.outputs.dsql_endpoint }}
+          Database__DsqlUser: admin
+          Database__AppRole: apolice_app
+          Database__AppRoleArns__0: ${{ steps.tf.outputs.api_role_arn }}
+          Database__AppRoleArns__1: ${{ steps.tf.outputs.worker_role_arn }}
+          Database__AppRoleArns__2: ${{ steps.tf.outputs.relay_role_arn }}
+          Messaging__Transport: Sqs
+          Messaging__Sqs__QueueUrl: ${{ steps.tf.outputs.queue_url }}
+          Outbox__DispatchImediato: "false"
+          # Nome vindo do Terraform: o parâmetro fica fora do Ssm:Prefixo das funções (só o seed o lê).
+          SSM_PARAMETRO_SENHA: ${{ steps.tf.outputs.seed_senha_parametro }}
+        run: |
+          senha="$(aws ssm get-parameter --name "$SSM_PARAMETRO_SENHA" --with-decryption \
+            --query Parameter.Value --output text)"
+          # Mascarar antes de qualquer uso: a partir daqui o valor vira *** em todo log. O runner
+          # desfaz %25, %0D e %0A no dado do comando e o alfabeto da senha inclui "%"; sem
+          # escapar, a máscara registraria outra string e o valor real sairia em claro.
+          mascara="${senha//%/%25}"
+          mascara="${mascara//$'\r'/%0D}"
+          mascara="${mascara//$'\n'/%0A}"
+          echo "::add-mask::$mascara"
+          # Só no ambiente deste processo: não vai para GITHUB_ENV nem para passos seguintes.
+          Seed__SenhaUsuarios="$senha" dotnet Apolice.Worker.dll seed
+
+      - name: Smoke test
+        env:
+          API_URL: ${{ steps.tf.outputs.api_url }}
+          FRONTEND_URL: ${{ vars.FRONTEND_URL }}
+        run: |
+          # A Function URL vem com "/" no fim; normalizar evita "//health" se isso mudar.
+          api="${API_URL%/}/"
+          curl -fsS --retry 5 --retry-delay 5 --retry-all-errors --max-time 30 "${api}health/ready"
+          echo
+          if [ -n "$FRONTEND_URL" ]; then
+            curl -fsS --retry 5 --retry-delay 5 --retry-all-errors --max-time 30 "${FRONTEND_URL%/}/api/v1/features"
+            echo
+          fi
+
+      - name: Resumo do deploy
+        env:
+          API_URL: ${{ steps.tf.outputs.api_url }}
+          FRONTEND_URL: ${{ vars.FRONTEND_URL }}
+        run: |
+          {
+            echo "### Deploy de produção concluído"
+            echo
+            echo "| Item | Valor |"
+            echo "|---|---|"
+            echo "| Commit | \`$COMMIT_SHA\` |"
+            echo "| API (Function URL) | $API_URL |"
+            echo "| Frontend | ${FRONTEND_URL:-não configurado} |"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -3,6 +3,10 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <OutputType>Exe</OutputType>
+    <!-- O SDK 10 recusa o alvo VSTest em projetos MTP; desligar o MTP aqui mantém o "dotnet test"
+         clássico do CI funcionando com o adaptador xunit.runner.visualstudio e o coletor do coverlet
+         (que só existe no modo VSTest). -->
+    <IsTestingPlatformApplication>false</IsTestingPlatformApplication>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />

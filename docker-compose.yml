@@ -1,0 +1,179 @@
+# Ambiente local descartável (desenvolvimento e E2E do CI). As senhas padrão são de brinquedo
+# de propósito: nada daqui vai para produção, onde o banco é Aurora DSQL com IAM auth.
+#
+#   docker compose up -d --build --wait                 → postgres, rabbitmq, migrate, seed, api, worker
+#   docker compose --profile observability up -d        → + Aspire Dashboard (http://localhost:18888)
+#   docker compose --profile cache up -d                → + Valkey (L2 do HybridCache)
+#
+# Telemetria e cache são opt-in por variável de ambiente (repassadas só se existirem no shell/.env):
+#   OTEL_EXPORTER_OTLP_ENDPOINT=http://aspire-dashboard:18889 docker compose --profile observability up -d
+#   Redis__ConnectionString=valkey:6379,abortConnect=false docker compose --profile cache up -d
+# (abortConnect=false: se o Valkey ainda não responde, o StackExchange.Redis segue tentando em vez
+# de falhar a primeira conexão de vez.)
+#
+# Portas publicadas só no loopback: numa rede compartilhada a máquina não expõe Postgres e
+# RabbitMQ com senha de brinquedo, o dashboard sem login nem o Valkey sem senha. O E2E do CI e o
+# "dotnet run" local acessam por localhost do mesmo jeito.
+# Imagens fixadas por digest (tag ao lado para leitura); o Dependabot renova o digest em PR.
+name: apolice
+
+x-dotnet-env: &dotnet-env
+  ASPNETCORE_ENVIRONMENT: Development
+  DOTNET_ENVIRONMENT: Development
+  Database__Provider: Postgres
+  ConnectionStrings__Apolice: Host=postgres;Port=5432;Database=apolice;Username=apolice;Password=${POSTGRES_PASSWORD:-apolice-dev}
+  Messaging__Transport: RabbitMq
+  Messaging__RabbitMq__Host: rabbitmq
+  Messaging__RabbitMq__Port: "5672"
+  Messaging__RabbitMq__Username: ${RABBITMQ_USER:-apolice}
+  Messaging__RabbitMq__Password: ${RABBITMQ_PASSWORD:-apolice-dev}
+  Messaging__RabbitMq__VirtualHost: /
+  # Sem valor = repassa do shell só se existir. Uma string vazia ligaria o exportador/L2 com
+  # endereço inválido; ausente, a aplicação simplesmente não os registra.
+  OTEL_EXPORTER_OTLP_ENDPOINT:
+  Redis__ConnectionString:
+
+x-worker-build: &worker-build
+  context: .
+  target: worker
+
+# A api e o worker só sobem com o schema migrado e o seed aplicado: o E2E e o dev local
+# dependem dos usuários demo.
+x-depende-do-seed: &depende-do-seed
+  seeder:
+    condition: service_completed_successfully
+  rabbitmq:
+    condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+    environment:
+      POSTGRES_DB: apolice
+      POSTGRES_USER: apolice
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-apolice-dev}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U apolice -d apolice"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine@sha256:d5c8b200a061242868833c8bbdd0703534a4a06ffe654a853e33acd46c7ce258
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-apolice}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-apolice-dev}
+    ports:
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 20s
+
+  # Dois serviços one-shot em sequência (e não um só com "sh -c"): cada verbo tem log e código
+  # de saída próprios, e o ENTRYPOINT da imagem continua sendo o mesmo da produção.
+  migrator:
+    build: *worker-build
+    command: ["migrate"]
+    environment:
+      <<: *dotnet-env
+      OTEL_SERVICE_NAME: apolice-worker
+      Outbox__DispatchImediato: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: "no"
+
+  seeder:
+    build: *worker-build
+    command: ["seed"]
+    environment:
+      <<: *dotnet-env
+      OTEL_SERVICE_NAME: apolice-worker
+      # Os eventos do seed ficam no outbox e o worker os publica: mesmo caminho da produção.
+      Outbox__DispatchImediato: "false"
+      Seed__DadosDemo: "true"
+      # Opcional: exporte Seed__SenhaUsuarios para fixar a senha dos usuários demo. Sem ela, em
+      # Development o seeder gera uma aleatória (o login por persona demo dispensa senha).
+      Seed__SenhaUsuarios:
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      target: api
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      <<: *dotnet-env
+      ASPNETCORE_HTTP_PORTS: "8080"
+      OTEL_SERVICE_NAME: apolice-api
+      Outbox__DispatchImediato: "true"
+    depends_on: *depende-do-seed
+    # A imagem aspnet não tem curl/wget (e não deve ganhar só por isso): o bash abre o socket
+    # e lê a linha de status do /health/ready, que já cobre banco e broker.
+    healthcheck:
+      test:
+        - CMD
+        - bash
+        - -c
+        - >-
+          exec 3<>/dev/tcp/127.0.0.1/8080 &&
+          printf 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 &&
+          IFS= read -r -t 5 status <&3 &&
+          [[ "$$status" == *" 200 "* ]]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped
+
+  worker:
+    build: *worker-build
+    environment:
+      <<: *dotnet-env
+      OTEL_SERVICE_NAME: apolice-worker
+      Outbox__DispatchImediato: "false"
+      Outbox__IntervaloSegundos: "2"
+      Outbox__Lote: "50"
+    depends_on: *depende-do-seed
+    restart: unless-stopped
+
+  aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:13.6.1@sha256:03099004e132a7ca2feb66c5fa24715ffeaaf2fffab6f8b2cda23de3abd3ea45
+    profiles: ["observability"]
+    environment:
+      # Só local: o dashboard fica sem login para não exigir o token impresso no log.
+      ASPIRE_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS: "true"
+    ports:
+      - "127.0.0.1:18888:18888"
+      - "127.0.0.1:4317:18889"
+
+  valkey:
+    image: valkey/valkey:9.1-alpine@sha256:48332870af354a799964c0012ae1194a0bf2bf894eb508f945810596dc2d8d11
+    profiles: ["cache"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres-data:

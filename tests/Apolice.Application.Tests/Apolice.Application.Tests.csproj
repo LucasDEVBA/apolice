@@ -3,6 +3,8 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <OutputType>Exe</OutputType>
+    <!-- xunit.v3 roda sobre o Microsoft Testing Platform; o coletor do coverlet (XPlat Code Coverage) só funciona no modo VSTest. -->
+    <IsTestingPlatformApplication>false</IsTestingPlatformApplication>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />

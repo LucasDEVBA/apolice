@@ -1,0 +1,45 @@
+# Contexto mínimo: só o que o Dockerfile precisa para restaurar e publicar Api e Worker.
+# Menos contexto = build mais rápido e nenhum segredo/artefato local vazando para a imagem.
+
+# Saídas de build e ferramentas
+**/bin/
+**/obj/
+**/TestResults/
+**/coverage/
+**/node_modules/
+**/.terraform/
+artifacts/
+coverage/
+coverage-report/
+
+# Fora do escopo da imagem .NET (frontend vai para a Vercel; testes rodam no CI)
+frontend/
+tests/
+infra/
+docs/
+.github/
+
+# Controle de versão, IDEs e arquivos locais
+.git/
+.gitignore
+.vs/
+.vscode/
+.idea/
+**/*.user
+**/*.swp
+**/.DS_Store
+
+# Segredos locais nunca entram no contexto. "**/" em tudo: sem ele o padrão do .dockerignore só
+# casa na raiz, e um src/Apolice.Api/.env iria para a camada de build (que fica no cache local).
+**/.env
+**/.env.*
+**/*.pfx
+**/*.pem
+**/*.key
+**/secrets.json
+
+# Documentação e arquivos de orquestração não são necessários no build
+**/*.md
+docker-compose*.yml
+Dockerfile
+.dockerignore

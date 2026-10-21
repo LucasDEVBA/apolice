@@ -11,7 +11,8 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <!-- Builds reprodutíveis no CI: restore falha se o lock divergir. -->
+    <!-- Sem packages.lock.json: o restore não confere o hash do conteúdo dos pacotes. Por isso o
+         job que gera os pacotes de produção (deploy.yml) restaura direto do nuget.org, sem cache. -->
     <RestorePackagesWithLockFile>false</RestorePackagesWithLockFile>
     <Deterministic>true</Deterministic>
     <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>

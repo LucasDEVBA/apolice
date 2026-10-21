@@ -1,0 +1,10 @@
+# Copie para backend.hcl (ignorado pelo git) e troque <ACCOUNT_ID> pelo output do bootstrap:
+#   terraform -chdir=infra/bootstrap output -raw state_bucket_name
+# Uso: terraform -chdir=infra/terraform init -backend-config=backend.hcl
+#
+# A key precisa começar com "<project>/": a role de deploy do GitHub só lê/grava esse prefixo.
+bucket       = "apolice-tfstate-<ACCOUNT_ID>"
+key          = "apolice/prod/terraform.tfstate"
+region       = "us-east-1"
+use_lockfile = true
+encrypt      = true

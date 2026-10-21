@@ -1,0 +1,110 @@
+version: 2
+
+# Patches e minors chegam agrupados num PR por ecossistema (menos ruído); majors vêm em PRs
+# separados porque costumam exigir mudança de código.
+# Cooldown de 7 dias em todos: versão publicada há minutos pode ser maliciosa ou quebrada, e uma
+# semana dá tempo de ela ser retirada antes de virar PR (inclusive nas actions do deploy).
+# Atualizações de segurança não esperam o cooldown.
+updates:
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Sao_Paulo
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      nuget-minor-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Sao_Paulo
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      npm-minor-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Sao_Paulo
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: ci
+    groups:
+      github-actions:
+        patterns: ["*"]
+
+  - package-ecosystem: terraform
+    directories:
+      - /infra/terraform
+      - /infra/bootstrap
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Sao_Paulo
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      terraform-minor-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  # Major de imagem base (.NET 11, Postgres 18...) é decisão de plataforma, não bump automático.
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Sao_Paulo
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: chore
+      include: scope
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Sao_Paulo
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: chore
+      include: scope
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
