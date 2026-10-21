@@ -1,0 +1,554 @@
+@import "tailwindcss";
+@import "@fontsource-variable/public-sans";
+@import "@fontsource-variable/source-serif-4/opsz.css";
+@import "@fontsource-variable/geist-mono";
+@import "./tokens.css";
+
+/*
+ * Mapeia os tokens semânticos para utilitários do Tailwind (bg-surface, text-ink, border-line…).
+ * A paleta padrão do Tailwind é desligada: em componente só existe cor de token (DESIGN.md §2.7).
+ */
+@theme inline {
+  --color-*: initial;
+  --font-sans: "Public Sans Variable", system-ui, sans-serif;
+  --font-serif: "Source Serif 4 Variable", Georgia, serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, monospace;
+
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-selected: var(--surface-selected);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-brand: var(--brand-surface);
+  --color-brand-deep: var(--brand-surface-deep);
+  --color-brand-line: var(--brand-surface-line);
+
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-on-navy: var(--on-navy);
+  --color-on-navy-2: var(--on-navy-2);
+  --color-on-navy-3: var(--on-navy-3);
+  --color-gold-text: var(--gold-text);
+  --color-gold-on-navy: var(--gold-on-navy);
+  --color-gold-line: var(--gold-line);
+  --color-gold-line-soft: var(--gold-line-soft);
+  --color-link: var(--link);
+  --color-focus: var(--focus);
+  --color-focus-ring: var(--focus-ring);
+
+  --color-primary: var(--primary-bg);
+  --color-primary-hover: var(--primary-bg-hover);
+  --color-primary-active: var(--primary-bg-active);
+  --color-primary-fg: var(--primary-fg);
+  --color-danger: var(--danger-bg);
+  --color-danger-hover: var(--danger-bg-hover);
+  --color-danger-fg: var(--danger-fg);
+  --color-hover-tint: var(--hover-tint);
+  --color-hover-tint-navy: var(--hover-tint-navy);
+
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-line-strong: var(--line-strong);
+  --color-line-navy: var(--line-navy);
+  --color-control: var(--control);
+  --color-control-disabled: var(--control-disabled);
+  --color-guide: var(--guide);
+  --color-overlay: var(--overlay);
+
+  --color-switch-on: var(--switch-on);
+  --color-switch-thumb: var(--switch-thumb);
+  --color-switch-thumb-on: var(--switch-thumb-on);
+
+  --color-ok: var(--ok);
+  --color-ok-bg: var(--ok-bg);
+  --color-ok-line: var(--ok-line);
+  --color-warn: var(--warn);
+  --color-warn-bg: var(--warn-bg);
+  --color-warn-line: var(--warn-line);
+  --color-bad: var(--bad);
+  --color-bad-bg: var(--bad-bg);
+  --color-bad-line: var(--bad-line);
+  --color-info: var(--info);
+  --color-info-bg: var(--info-bg);
+  --color-info-line: var(--info-line);
+  --color-neutral: var(--neutral);
+  --color-neutral-bg: var(--neutral-bg);
+  --color-neutral-line: var(--neutral-line);
+  --color-ok-on-navy: var(--ok-on-navy);
+  --color-warn-on-navy: var(--warn-on-navy);
+  --color-bad-on-navy: var(--bad-on-navy);
+  --color-info-on-navy: var(--info-on-navy);
+
+  --color-demo: var(--demo-fg);
+  --color-demo-bg: var(--demo-bg);
+  --color-demo-line: var(--demo-line);
+
+  --color-prod-auto: var(--prod-auto);
+  --color-prod-resid: var(--prod-resid);
+  --color-prod-vida: var(--prod-vida);
+  --color-prod-auto-chip: var(--prod-auto-chip);
+  --color-prod-auto-chip-fg: var(--prod-auto-chip-fg);
+  --color-prod-resid-chip: var(--prod-resid-chip);
+  --color-prod-resid-chip-fg: var(--prod-resid-chip-fg);
+  --color-prod-vida-chip: var(--prod-vida-chip);
+  --color-prod-vida-chip-fg: var(--prod-vida-chip-fg);
+
+  --color-tl-gold: var(--tl-gold);
+  --color-tl-gold-bg: var(--tl-gold-bg);
+  --color-tl-steel: var(--tl-steel);
+  --color-tl-steel-bg: var(--tl-steel-bg);
+  --color-tl-navy: var(--tl-navy);
+  --color-tl-navy-bg: var(--tl-navy-bg);
+
+  --color-avatar-navy: var(--avatar-navy-bg);
+  --color-avatar-navy-fg: var(--avatar-navy-fg);
+  --color-avatar-steel: var(--avatar-steel-bg);
+  --color-avatar-steel-fg: var(--avatar-steel-fg);
+  --color-avatar-gold: var(--avatar-gold-bg);
+  --color-avatar-gold-fg: var(--avatar-gold-fg);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-accent: var(--chart-accent);
+  --color-chart-projection: var(--chart-projection);
+  --color-chart-ref: var(--chart-ref);
+  --color-chart-grid: var(--chart-grid);
+  --color-chart-axis: var(--chart-axis);
+  --color-meter-track: var(--meter-track);
+  --color-skeleton: var(--skeleton);
+  --color-toast: var(--toast-bg);
+  --color-toast-line: var(--toast-line);
+
+  /* Tamanhos de texto da escala (DESIGN.md §3.8) que o Tailwind não tem: 12,5 · 13 · 13,5 · 15. */
+  --text-meta: 0.78125rem;
+  --text-label: 0.8125rem;
+  --text-item: 0.84375rem;
+  --text-campo: 0.9375rem;
+
+  --radius-xs: 5px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-2xl: 14px;
+
+  --shadow-xs: var(--sombra-xs);
+  --shadow-thumb: var(--sombra-thumb);
+  --shadow-overlay: var(--sombra-overlay);
+  --shadow-modal: var(--sombra-modal);
+}
+
+/* Curvas de movimento (DESIGN.md §6): sempre emitidas, porque o CSS próprio também as usa. */
+@theme static {
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    background: var(--canvas);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Contêiner que força um tema (vitrine, portais): repinta fundo e texto com os tokens. */
+  [data-theme] {
+    color: var(--ink);
+  }
+
+  ::selection {
+    background: var(--selection);
+    color: var(--ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  /* Sobre marinho o azul de foco dá 2,1:1: usa o fio dourado (7,3:1). */
+  .on-navy :focus-visible {
+    outline-color: var(--gold-line);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+
+  /* Botões, links e controles não selecionam texto no toque longo. */
+  button,
+  [role="tab"],
+  [role="switch"],
+  [role="radio"] {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
+/* ---------- Tipografia (DESIGN.md §3.8): mobile primeiro, desktop a partir de md ---------- */
+
+@utility type-display-xl {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 2.125rem;
+  line-height: 1.12;
+  letter-spacing: -0.022em;
+  font-optical-sizing: auto;
+  @media (width >= 48rem) {
+    font-size: 2.875rem;
+    line-height: 1.1;
+  }
+}
+
+@utility type-display-lg {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 1.75rem;
+  line-height: 1.14;
+  letter-spacing: -0.02em;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-optical-sizing: auto;
+  @media (width >= 48rem) {
+    font-size: 2.5rem;
+    line-height: 1.05;
+  }
+}
+
+@utility type-title-page {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 1.6875rem;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-optical-sizing: auto;
+  @media (width >= 48rem) {
+    font-size: 2rem;
+  }
+}
+
+@utility type-title-auth {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 1.75rem;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-optical-sizing: auto;
+  @media (width >= 48rem) {
+    font-size: 2.125rem;
+  }
+}
+
+@utility type-title-modal {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 1.375rem;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  font-optical-sizing: auto;
+}
+
+@utility type-title-card {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 1.125rem;
+  line-height: 1.28;
+  letter-spacing: -0.01em;
+  font-optical-sizing: auto;
+  @media (width >= 48rem) {
+    font-size: 1.25rem;
+    line-height: 1.25;
+  }
+}
+
+/* Números em serifa: KPIs, heróis e fatos. */
+@utility fig {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings:
+    "lnum" 1,
+    "tnum" 1;
+  font-optical-sizing: auto;
+  letter-spacing: -0.015em;
+}
+
+@utility type-fig-hero {
+  font-size: 2.125rem;
+  line-height: 1.06;
+  @media (width >= 48rem) {
+    font-size: 2.625rem;
+    line-height: 1.05;
+  }
+}
+
+@utility type-fig-kpi {
+  font-size: 1.75rem;
+  line-height: 1.14;
+  @media (width >= 48rem) {
+    font-size: 2.25rem;
+    line-height: 1.1;
+  }
+}
+
+@utility type-fig-lg {
+  font-size: 1.5rem;
+  line-height: 1.1;
+}
+
+/* fig-lg de 28 px: total do gráfico (DESIGN.md §3.8/§4.15). */
+@utility type-fig-total {
+  font-size: 1.75rem;
+  line-height: 1.1;
+}
+
+@utility type-fig-sm {
+  font-size: 1.1875rem;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+@utility type-label {
+  font-size: 0.8125rem;
+  line-height: 1.125rem;
+  font-weight: 600;
+}
+
+@utility type-meta {
+  font-size: 0.78125rem;
+  line-height: 1.125rem;
+}
+
+@utility type-caption {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+}
+
+@utility type-micro {
+  font-size: 0.71875rem;
+  line-height: 0.875rem;
+  font-weight: 500;
+}
+
+/* Algarismos tabulares e alinhados: toda célula numérica. */
+@utility tnum {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* Identificadores (AUTO-2026-000042, RCF_DM): Geist Mono a 0,92em do contexto. */
+@utility mono-id {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+/* Foco de campo: borda + anel de 3 px (DESIGN.md §4.8). */
+@utility focus-campo {
+  &:focus-visible,
+  &:focus-within:has(:focus-visible) {
+    outline: none;
+    border-color: var(--focus);
+    box-shadow: 0 0 0 3px var(--focus-ring);
+  }
+}
+
+/* Fade na borda direita de listas que rolam na horizontal (abas): indica que há mais conteúdo. */
+@utility fade-x {
+  mask-image: linear-gradient(to right, black calc(100% - 24px), transparent);
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ---------- Movimento (DESIGN.md §6) ---------- */
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes sumir {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes popover-entrar {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+}
+
+@keyframes popover-sair {
+  to {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+}
+
+@keyframes modal-entrar {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+@keyframes modal-sair {
+  to {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+@keyframes sheet-entrar {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes sheet-sair {
+  to {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes drawer-entrar {
+  from {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes drawer-sair {
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes skeleton-pulso {
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes realce-linha {
+  from {
+    background-color: color-mix(in srgb, var(--selection) 40%, transparent);
+  }
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@utility anima-popover {
+  transform-origin: var(--radix-popper-transform-origin, center);
+  &[data-state="open"],
+  &[data-state="delayed-open"],
+  &[data-state="instant-open"] {
+    animation: popover-entrar var(--dur-enter) var(--ease-out);
+  }
+  &[data-state="closed"] {
+    animation: popover-sair calc(var(--dur-enter) * 0.75) var(--ease-in);
+  }
+}
+
+@utility anima-overlay {
+  &[data-state="open"] {
+    animation: aparecer 200ms var(--ease-out);
+  }
+  &[data-state="closed"] {
+    animation: sumir 150ms var(--ease-in);
+  }
+}
+
+@utility anima-modal {
+  &[data-state="open"] {
+    animation: modal-entrar var(--dur-panel) var(--ease-out);
+  }
+  &[data-state="closed"] {
+    animation: modal-sair calc(var(--dur-panel) * 0.75) var(--ease-in);
+  }
+}
+
+@utility anima-sheet {
+  &[data-state="open"] {
+    animation: sheet-entrar var(--dur-panel) var(--ease-out);
+  }
+  &[data-state="closed"] {
+    animation: sheet-sair calc(var(--dur-panel) * 0.75) var(--ease-in);
+  }
+}
+
+@utility anima-drawer {
+  &[data-state="open"] {
+    animation: drawer-entrar var(--dur-panel) var(--ease-out);
+  }
+  &[data-state="closed"] {
+    animation: drawer-sair calc(var(--dur-panel) * 0.75) var(--ease-in);
+  }
+}
+
+/* Invisível nos primeiros 200 ms (não pisca), depois pulsa de opacidade 1 → 0,6 em 1,4 s. */
+@utility skeleton-bloco {
+  animation:
+    aparecer 1ms linear 200ms backwards,
+    skeleton-pulso 1.4s ease-in-out 200ms infinite;
+  @media (prefers-reduced-motion: reduce) {
+    animation: aparecer 1ms linear 200ms backwards;
+  }
+}
+
+@utility anima-realce {
+  animation: realce-linha 900ms var(--ease-out);
+}
+
+/* Movimento reduzido: sem transform animado; painéis só fazem fade curto (DESIGN.md §6). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .anima-popover[data-state],
+  .anima-modal[data-state],
+  .anima-sheet[data-state],
+  .anima-drawer[data-state] {
+    animation-name: aparecer;
+    animation-duration: 120ms;
+  }
+
+  .anima-popover[data-state="closed"],
+  .anima-modal[data-state="closed"],
+  .anima-sheet[data-state="closed"],
+  .anima-drawer[data-state="closed"] {
+    animation-name: sumir;
+    animation-duration: 90ms;
+  }
+}

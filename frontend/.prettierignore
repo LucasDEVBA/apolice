@@ -1,0 +1,10 @@
+node_modules
+dist
+coverage
+playwright-report
+test-results
+.screens
+pnpm-lock.yaml
+src/api/schema.d.ts
+src/ui/marca/gravuras/*.svg
+public/*.svg
