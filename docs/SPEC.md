@@ -501,3 +501,34 @@ first (375 px), tema claro/escuro, pt-BR (moeda e datas). Vitest + Testing Libra
   **IaC**: Terraform (state em S3 com lockfile). **CI/CD**: GitHub Actions com OIDC (sem chaves longas).
 - **Frontend**: Vercel; `vercel.json` reescreve `/api/*`, `/scalar/*`, `/openapi/*` para a Function URL
   (mesma origem para o browser → cookie first-party, sem CORS).
+
+## 13. Chaves de configuração (canônicas)
+
+Em env var use `__` no lugar de `:` (ex.: `Database__Provider`). Nada de segredo em `appsettings*.json`.
+
+| Chave | Valores / padrão | Observação |
+|---|---|---|
+| `Database:Provider` | `Postgres` (padrão) \| `Dsql` | |
+| `ConnectionStrings:Apolice` | — | só Postgres |
+| `Database:DsqlEndpoint` | `<id>.dsql.<região>.on.aws` | só DSQL |
+| `Database:DsqlUser` | `admin` (migrations) \| `apolice_app` (aplicação) | IAM auth, sem senha |
+| `Database:AppRole` | `apolice_app` | papel criado pelo migrator |
+| `Database:AppRoleArns` | lista de ARNs IAM | `AWS IAM GRANT` do papel da aplicação |
+| `Messaging:Transport` | `RabbitMq` (padrão) \| `Sqs` \| `InMemory` | |
+| `Messaging:RabbitMq:Host`/`Port`/`Username`/`Password`/`VirtualHost` | `localhost`/`5672`/—/—/`/` | |
+| `Messaging:Sqs:QueueUrl` | — | |
+| `Outbox:DispatchImediato` | `true` na API, `false` no worker | |
+| `Outbox:IntervaloSegundos` / `Outbox:Lote` | `2` / `50` | relay local |
+| `Jwt:Issuer` / `Jwt:Audience` | `apolice-api` / `apolice-web` | |
+| `Jwt:SigningKey` | ≥ 32 bytes | obrigatório fora de Development; em Development, se ausente, gerar chave efêmera |
+| `Jwt:AccessTokenMinutos` / `Jwt:RefreshTokenDias` | `15` / `7` | |
+| `Cors:Origens` | lista | vazio = sem CORS (mesma origem via proxy) |
+| `Seed:SenhaUsuarios` | — | obrigatório fora de Development |
+| `Seed:DadosDemo` | `true` | |
+| `Redis:ConnectionString` | — | opcional (L2 do HybridCache) |
+| `Ssm:Prefixo` | ex.: `/apolice/prod` | se presente, carrega parâmetros do SSM |
+| `FeatureManagement:LoginDemo`/`TriagemAutomaticaSinistros`/`DocumentoPdf`/`EndossoOnline` | `true` | |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` / `OTEL_SERVICE_NAME` | — / `apolice-api` \| `apolice-worker` | exportador só se definido |
+
+Portas locais: API `8080` (container) / `5080` (`dotnet run`), frontend dev `5173` (proxy `/api` → API),
+Postgres `5432`, RabbitMQ `5672`/`15672`, Aspire Dashboard `18888` (UI) e `4317` (OTLP).
