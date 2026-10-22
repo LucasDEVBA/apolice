@@ -124,6 +124,12 @@ services:
       ASPNETCORE_HTTP_PORTS: "8080"
       OTEL_SERVICE_NAME: apolice-api
       Outbox__DispatchImediato: "true"
+      # Stack local/E2E: os testes Playwright rodam em paralelo e todos fazem login pela mesma origem.
+      # Produção usa os padrões do SPEC 7 (10 logins/min por IP).
+      RateLimiting__AuthPorMinuto: "1000"
+      RateLimiting__RefreshPorMinuto: "1000"
+      RateLimiting__GlobalPorMinuto: "5000"
+      RateLimiting__FichasPorSegundo: "100"
     depends_on: *depende-do-seed
     # A imagem aspnet não tem curl/wget (e não deve ganhar só por isso): o bash abre o socket
     # e lê a linha de status do /health/ready, que já cobre banco e broker.
