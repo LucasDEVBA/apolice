@@ -97,7 +97,8 @@ internal sealed partial class DsqlMigrationRunner(
         {
             concluido = await ComRetentativaAsync(async conexao =>
             {
-                await using var espera = new NpgsqlCommand("SELECT sys.wait_for_job(@job)", conexao) { CommandTimeout = TimeoutEsperaIndiceSegundos };
+                // No DSQL wait_for_job é procedure (SELECT dá 42809); o CALL devolve a coluna "succeeded".
+                await using var espera = new NpgsqlCommand("CALL sys.wait_for_job(@job)", conexao) { CommandTimeout = TimeoutEsperaIndiceSegundos };
                 espera.Parameters.AddWithValue("job", job.ToString()!);
                 return await espera.ExecuteScalarAsync(cancellationToken);
             }, "sys.wait_for_job", cancellationToken);
@@ -135,7 +136,8 @@ internal sealed partial class DsqlMigrationRunner(
 
         await VincularRolesIamAsync(identificador, papel, configuracao.AppRoleArns, cancellationToken);
 
-        await ExecutarAsync($"GRANT USAGE ON SCHEMA public TO {identificador}", cancellationToken);
+        // Sem GRANT USAGE ON SCHEMA public: no DSQL o public é entidade de sistema (o GRANT dá 0A000) e já concede
+        // USAGE a PUBLIC — verificado no cluster com has_schema_privilege.
         foreach (var tabela in Tabelas())
         {
             var privilegios = string.Equals(tabela, TabelaAuditoria, StringComparison.Ordinal) ? PrivilegiosSoInsercao : PrivilegiosCompletos;
