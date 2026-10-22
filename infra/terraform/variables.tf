@@ -64,6 +64,17 @@ variable "github_repository" {
   }
 }
 
+variable "github_repository_sub_imutavel" {
+  description = "Prefixo imutável do sub OIDC (owner@id/repo@id), de GET /repos/{owner}/{repo}/actions/oidc/customization/sub. Vazio = só o formato legado."
+  type        = string
+  default     = "LucasDEVBA@92340053/apolice@1429658944"
+
+  validation {
+    condition     = var.github_repository_sub_imutavel == "" || can(regex("^[A-Za-z0-9-]+@[0-9]+/[A-Za-z0-9._-]+@[0-9]+$", var.github_repository_sub_imutavel))
+    error_message = "github_repository_sub_imutavel deve estar no formato owner@id/repositorio@id."
+  }
+}
+
 variable "create_github_oidc_provider" {
   description = "Cria o OIDC provider do GitHub. Use false se a conta já tiver um (só pode existir um por URL)."
   type        = bool

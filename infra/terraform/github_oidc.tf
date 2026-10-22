@@ -53,10 +53,15 @@ data "aws_iam_policy_document" "github_assume" {
       values   = [local.github_oidc_audience]
     }
 
+    # Repositórios novos do GitHub emitem o sub no formato imutável (owner@id/repo@id), que não muda
+    # se o repositório for renomeado ou transferido; o formato legado fica para quem não migrou.
     condition {
       test     = "StringEquals"
       variable = "${local.github_oidc_host}:sub"
-      values   = ["repo:${var.github_repository}:environment:${var.environment}"]
+      values = compact([
+        "repo:${var.github_repository}:environment:${var.environment}",
+        var.github_repository_sub_imutavel == "" ? "" : "repo:${var.github_repository_sub_imutavel}:environment:${var.environment}",
+      ])
     }
   }
 }
