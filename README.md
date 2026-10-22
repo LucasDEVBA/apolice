@@ -123,7 +123,8 @@ Cada item aponta para onde está no código. A especificação completa fica em 
   |---|---|---|
   | Domain | 548 | Puros, sem mock; valores de tarifação calculados à mão em cada caso |
   | Application | 398 | Handlers com banco em memória que só "commita" no `SaveChanges`, `FakeTimeProvider` e fakes das portas |
-  | Integração | 157 | PostgreSQL e RabbitMQ em Testcontainers, com migrations reais: 93 testes da infraestrutura com a composição de DI real e 64 da API inteira (`WebApplicationFactory<Program>`) e dos handlers do Worker |
+  | Arquitetura | 32 | ArchUnitNET: 18 regras de dependência entre as camadas (SPEC §3), 10 controles positivos que provam que cada alvo detecta dependência e 4 convenções (handlers `sealed` com sufixo `Handler`, agregados sem setter público) |
+  | Integração | 165 | PostgreSQL e RabbitMQ em Testcontainers, com migrations reais: 94 testes da infraestrutura com a composição de DI real e 71 da API inteira (`WebApplicationFactory<Program>`) e dos handlers do Worker |
   | E2E | Playwright | Stack inteira no `docker compose`, rodando no CI |
 
   O CI falha se a cobertura de linhas de Domain + Application ficar em 80% ou menos.
@@ -253,7 +254,6 @@ O Terraform cria um orçamento de US$ 5 por mês que avisa por e-mail em 80% do 
 
 Limitações conhecidas e o que faria a seguir, sem enfeite:
 
-- **Regras de arquitetura no ArchUnitNET.** O projeto `Apolice.ArchitectureTests` existe, mas ainda não tem regras. Hoje a regra de dependência da Application é garantida por um teste de reflexão em `Apolice.Application.Tests` (`Deve_referenciar_so_dominio_e_abstracoes_quando_compila_a_aplicacao`).
 - **Teto de concorrência da API.** Sem `api_reserved_concurrency`, um flood na Function URL pública pode ocupar a concorrência da conta. Contas novas têm limite de 10 execuções simultâneas, o que impede reservar; o freio entra quando a cota permitir.
 - **Rate limiting por instância e IP forjável.** O limitador do ASP.NET Core guarda estado em memória, então cada container Lambda conta sozinho. E, como os IPs da Vercel não são fixos, a API aceita `X-Forwarded-For` de qualquer remetente: quem chama a Function URL direto pode forjar o header e trocar de partição no limite por IP (o limite por usuário autenticado não depende disso). Os dois pedem a mesma correção: aceitar só tráfego do proxy e contar na borda (CloudFront/WAF) ou em estado compartilhado.
 - **Cache por instância.** Sem L2 em produção, cada container tem o próprio catálogo em cache: depois de uma mudança de taxa, outro container pode simular com a taxa anterior por até 10 minutos. A cotação gravada sempre lê o cadastro, nunca o cache.
