@@ -532,3 +532,16 @@ Em env var use `__` no lugar de `:` (ex.: `Database__Provider`). Nada de segredo
 
 Portas locais: API `8080` (container) / `5080` (`dotnet run`), frontend dev `5173` (proxy `/api` → API),
 Postgres `5432`, RabbitMQ `5672`/`15672`, Aspire Dashboard `18888` (UI) e `4317` (OTLP).
+
+## 14. Compatibilidade do Aurora DSQL — verificada no cluster real (22/10/2026)
+
+Rodado com `psql` (usuário `admin`, IAM token) no cluster de produção, cada comando em autocommit:
+`CREATE SCHEMA`; `CREATE TABLE` com PK composta e `REFERENCES ... ON DELETE CASCADE` inline (FK é
+aplicada: violação → erro 23503); `CREATE INDEX ASYNC IF NOT EXISTS` e `CREATE UNIQUE INDEX ASYNC
+IF NOT EXISTS` (devolvem `job_id`; acompanhar em `sys.jobs`); `INSERT ... ON CONFLICT (chave) DO
+UPDATE SET ultimo = t.ultimo + 1 RETURNING ultimo`; `ILIKE`; keyset com `OR` explícito e com
+row-value `(a, b) < (x, y)`; `date_trunc('month', ts AT TIME ZONE 'America/Sao_Paulo')` + `to_char`;
+agregação com `FILTER`; `UPDATE ... WHERE versao = x`; `CREATE ROLE ... WITH LOGIN`; `GRANT USAGE ON
+SCHEMA`; `GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA`; `AWS IAM GRANT <papel> TO
+'<arn da role>'` e `AWS IAM REVOKE`. Tudo funcionou. Índice criado com `ASYNC` só passa a ser usado
+quando o job termina — o migrator não precisa esperar, mas não dependa dele no mesmo deploy.
