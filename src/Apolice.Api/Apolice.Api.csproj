@@ -5,6 +5,10 @@
     <OpenApiGenerateDocumentsOptions>--file-name v1</OpenApiGenerateDocumentsOptions>
     <AWSProjectType>Lambda</AWSProjectType>
     <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+    <!-- AV0029/AV0030 sugerem o pacote Asp.Versioning.OpenApi (um documento por versão). Há uma versão só (v1) e o SPEC
+         pede o OpenAPI nativo com AddOpenApi("v1"); o ApiExplorer do Asp.Versioning já entrega o grupo "v1" e a rota
+         com a versão substituída. Ao surgir a v2, trocar pelo pacote em vez de duplicar documentos à mão. -->
+    <NoWarn>$(NoWarn);AV0029;AV0030</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Apolice.Infrastructure\Apolice.Infrastructure.csproj" />

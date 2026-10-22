@@ -275,7 +275,7 @@ Largura máxima do conteúdo: 1360 px, centralizada dentro do `main` em telas �
 | `--radius-xs` | 5 px | Segmento interno, `kbd` |
 | `--radius-sm` | 6 px | Ícone de documento, bloco de skeleton |
 | `--radius-md` | 8 px | Botões, inputs, selects, itens de navegação, tooltip |
-| `--radius-lg` | 10 px | Chips de ícone, seletor de corretora, cartões de escolha, toast |
+| `--radius-lg` | 10 px | Chips de ícone, bloco da corretora, cartões de escolha, toast |
 | `--radius-xl` | 12 px | Cards |
 | `--radius-2xl` | 14 px | Face da apólice, modal, bottom sheet (só no topo) |
 | `--radius-full` | 999 px | Badges, toggles, avatares, pontos |
@@ -413,8 +413,9 @@ Toast, DropdownMenu, RadioGroup, ToggleGroup).
   (anel fino a 0,18). Nunca sobre superfície branca, nunca mais de uma por viewport.
 
 ### 4.2 Sidebar
-- **Anatomia (de cima para baixo):** marca → seletor de corretora (borda de fio dourado a 28%, nome 13,5/600,
-  "Corretora de seguros" 12) → navegação → separador → **Filas salvas** (enxerto do C) → "Sobre o projeto" →
+- **Anatomia (de cima para baixo):** marca → bloco da corretora (borda de fio dourado a 28%, nome 13,5/600,
+  "Corretora fictícia · demonstração" 12; estático, sem chevron nem menu, porque o SPEC não modela corretora,
+  ver §10.2) → navegação → separador → **Filas salvas** (enxerto do C) → "Sobre o projeto" →
   rodapé do usuário (avatar, nome, papel, botão ⇄ "Trocar persona").
 - **Item de navegação:** 40 px, raio 8, ícone 18 em `--on-navy-3`, rótulo 14/500 em `--on-navy-2`,
   contador à direita (12/600 tabular). Hover: fundo branco a 5%. Ativo: `--sidebar-active`, texto branco
@@ -857,6 +858,8 @@ Regras:
   entram se o backend passar a expor pagamento.
 - **Documentos de sinistro** ("4 sem documentos") e "Condições gerais SUSEP" não existem. Use o que o SPEC
   tem: triagem (score + alertas), status e histórico.
+- **Corretora:** a referência mostra um seletor de corretora, mas o domínio não tem essa entidade. A sidebar
+  mostra um bloco estático rotulado como corretora fictícia de demonstração (§4.2).
 - **Volume:** o seed cria cerca de 10 apólices em 12 meses. Os componentes precisam funcionar com números
   pequenos e meses vazios; a referência usa 1.284 só para ilustrar o layout cheio.
 

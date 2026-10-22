@@ -314,16 +314,25 @@ Regras dos handlers:
   modificados. `DbUpdateConcurrencyException` → erro `Concorrencia.Conflito` (409).
 - Interceptors: `DomainEventsToOutboxInterceptor` (SavingChanges: eventos → `OutboxMessage`),
   `VersaoInterceptor`, `OutboxDispatchImediatoInterceptor` (SavedChanges: publica as mensagens
-  recém-gravadas, best-effort; o relay cobre falhas). Marcação de processado via `ExecuteUpdateAsync`.
+  recém-gravadas, best-effort, com prazo total de 3 s, porque roda dentro da requisição depois do commit; o relay
+  cobre falhas e o que não coube no prazo). Marcação de processado via `ExecuteUpdateAsync`.
 - Provedores (`Database:Provider`): `Postgres` (connection string) | `Dsql` (`NpgsqlDataSourceBuilder` com
-  `SslMode=VerifyFull` + `UsePeriodicPasswordProvider` gerando o token IAM pelo `DSQLAuthTokenGenerator` do
-  `AWSSDK.DSQL` → `UseNpgsql(dataSource)`; registro síncrono, sem o `DsqlDataSource.CreateAsync`, que exigiria
-  sync-over-async na composição), com estratégia de retry que inclui SQLSTATE `40001`, `OC000`, `OC001`.
+  `SslMode=VerifyFull` + `UsePasswordProvider` gerando o token IAM pelo `DSQLAuthTokenGenerator` do
+  `AWSSDK.DSQL` a cada abertura de conexão física → `UseNpgsql(dataSource)`; registro síncrono, sem o
+  `DsqlDataSource.CreateAsync`, que exigiria sync-over-async na composição. Não use o provedor periódico: na Lambda o
+  processo congela entre invocações, o timer não roda e a primeira conexão depois de um congelamento longo abriria
+  com token vencido), com estratégia de retry que inclui SQLSTATE `40001`, `OC000`, `OC001`.
+  No DSQL, o `IsolamentoDsqlInterceptor` abre as transações do `SaveChanges` em `REPEATABLE READ` (o nível que o DSQL
+  de fato aplica) em vez do `READ COMMITTED` que o Npgsql envia para `IsolationLevel.Unspecified`.
   Um único `NpgsqlDataSource` serve EF, Dapper e numerador. Sem transações explícitas/savepoints no caminho normal.
 - Migrations EF geradas com o provedor Postgres. `DsqlMigrationRunner` aplica no DSQL: um comando
   DDL por transação (autocommit), `CREATE [UNIQUE] INDEX` → `... ASYNC`, `CREATE TABLE/INDEX IF NOT EXISTS`
-  (reexecutável), grava histórico do EF, depois `CREATE ROLE`/`AWS IAM GRANT`/`GRANT` do papel da
-  aplicação (`Database:AppRole`, `Database:AppRoleArns`). Sem partial index, sem trigger, sem sequence.
+  (reexecutável; espera o job do índice com `sys.wait_for_job` e falha o deploy se o job falhar), grava histórico do
+  EF, depois `CREATE ROLE`/`AWS IAM GRANT`/`GRANT` do papel da aplicação (`Database:AppRole`, `Database:AppRoleArns`).
+  Os vínculos IAM vigentes são lidos de `sys.iam_pg_role_mappings`: só os ARNs que faltam recebem `AWS IAM GRANT`, e
+  os que saíram da configuração recebem `AWS IAM REVOKE` (só quando todos os configurados já constam da visão).
+  Privilégio mínimo: `auditoria` só `SELECT, INSERT`; demais tabelas `SELECT, INSERT, UPDATE, DELETE`. Só "já existe"
+  de verdade (42P07, 42710, 42701, 42P06) é tolerado na reexecução. Sem partial index, sem trigger, sem sequence.
   O Worker chama `IMigradorBanco.MigrarAsync`, que escolhe `Database.MigrateAsync` (Postgres) ou o runner (DSQL).
 - `Numerador` (INumerador): `INSERT ... ON CONFLICT (chave) DO UPDATE SET ultimo = numeradores.ultimo + 1 RETURNING ultimo`
   com retry de OCC. Chaves `APOLICE:{PRODUTO}:{ANO}` e `SINISTRO:{ANO}`. Lacunas são aceitas.
@@ -335,14 +344,19 @@ Regras dos handlers:
   `apolice.worker.dlq`), publisher confirms, mensagens persistentes. SQS: `SendMessage` com atributos
   `tipo`, `traceparent`, `correlationId` (+ `mensagemId` e `ocorridoEm`: o MessageId do SQS muda a cada reenvio).
   InMemory: despacha direto para `IIntegrationEventDispatcher` (testes).
-- `OutboxDispatcher.DespacharPendentesAsync(int lote)` (ordem por `ocorrido_em`, incrementa
-  `tentativas`, grava `ultimo_erro`).
+- `OutboxDispatcher.DespacharPendentesAsync(int lote)` (ordem por `tentativas` e depois `ocorrido_em`: uma mensagem que
+  falha sempre vai para o fim e não trava os eventos novos; incrementa `tentativas`, grava `ultimo_erro`).
 - Segurança: `PasswordHasher<Usuario>` (PBKDF2 do ASP.NET Core Identity), `JwtTokenService`
   (HS256, `Jwt:Issuer`, `Jwt:Audience`, `Jwt:SigningKey` ≥ 32 bytes, access 15 min com claims
   `sub`, `name`, `email`, `role`, `jti`), refresh token = 32 bytes aleatórios base64url, guardado como SHA-256.
   A validação da chave no start é da API (`ExigirJwtNaInicializacao`): o Worker roda migrate/seed sem a chave.
-- Cache: `CatalogoProdutosCache` com `HybridCache` (chave `produtos:v1`, tag `produtos`, 10 min);
-  L2 Redis opcional (`Redis:ConnectionString`). Invalidação por tag ao atualizar taxa.
+- Cache: `CatalogoProdutosCache` com `HybridCache` (chave `produtos:v1`, tag `produtos`, 10 min; L1 em memória 1 min);
+  L2 Redis opcional (`Redis:ConnectionString`). Invalidação por tag ao atualizar taxa. A invalidação só limpa a memória
+  da instância que atendeu o PUT: sem Redis (produção), outra instância pode tarifar com a taxa antiga por até 1 min.
+- Idempotência: `IArmazemIdempotencia` (tabela `idempotencia`, Dapper em autocommit com retry de OCC): `ReservarAsync`
+  (INSERT ... ON CONFLICT antes do caso de uso; reserva pendente = `status_code` 0, vale 2 min), `ConcluirAsync`
+  (grava a resposta 2xx, vale 24 h), `LiberarAsync` (erro libera a chave) e `PurgarVencidosAsync` (o Worker apaga os
+  vencidos em lotes; o corpo guarda CPF e e-mail).
 - `QuestPdfGeradorDocumentoApolice` (licença Community). `FeatureFlags` sobre `IFeatureManager`.
   `Auditoria` grava `AuditoriaRegistro` no mesmo DbContext (salvo com o UoW).
 - `DataSeeder` (idempotente): 3 produtos com coberturas/taxas da seção 4.2; usuários demo
@@ -379,19 +393,30 @@ stack trace) + StatusCodePages → HSTS (prod) → `CorrelationIdMiddleware` (he
 aceita ≤ 64 chars `[A-Za-z0-9-]`, senão gera; devolve no response; vai para o LogContext e para o
 outbox) → `SecurityHeadersMiddleware` (nosniff, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`,
 `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'` exceto rotas do Scalar,
-`Permissions-Policy`) → Serilog request logging → CORS (origens de `Cors:Origens`) → RateLimiter →
-Authentication → Authorization → endpoints (filtros: validação FluentValidation → 400
-`ValidationProblemDetails`; idempotência).
+`Permissions-Policy`) → Serilog request logging → ExceptionHandler de novo (por dentro do log, para ele registrar o
+status real e não "500" a cada exceção tratada) → CORS (origens de `Cors:Origens`) → Authentication →
+RateLimiter → Authorization → endpoints (filtros: validação FluentValidation → 400
+`ValidationProblemDetails`; idempotência). Authentication vem antes do RateLimiter porque o limitador global
+particiona por usuário e só o JWT já validado identifica o usuário (ler o `sub` sem validar permitiria trocar de
+partição forjando tokens). ForwardedHeaders confia em qualquer remetente (IPs da Vercel não são fixos) e usa até 2
+saltos do `X-Forwarded-For` (`ForwardLimit = 2`): a Vercel sobrescreve o header com o IP do cliente e a Function URL pode
+acrescentar o IP do nó de saída da Vercel; com 1 salto todos os visitantes do mesmo nó dividiriam o limite. Quem chama a
+Function URL direto pode forjar o IP e escapar do limite por IP; o limite por usuário não depende disso. Conferir no
+primeiro deploy o formato real do header. O limitador é em memória por instância (N instâncias = N × o limite).
 
 **Mapeamento de erro → HTTP:** Validacao 400, NaoAutorizado 401, Proibido 403, NaoEncontrado 404,
 Conflito 409, RegraDeNegocio 422. ProblemDetails com `type = "urn:apolice:problema:{codigo}"`,
 `title`, `status`, `detail`, extensões `codigo`, `traceId`, `correlationId`.
 
 **Autorização:** políticas `Corretor` (Corretor|Admin), `Analista` (Analista|Admin), `Admin`.
-**Rate limiting:** política `auth` (janela fixa 10/min por IP) em login/demo/refresh; limitador
-global token bucket 120/min por usuário (ou IP se anônimo); 429 com `Retry-After` em ProblemDetails.
+**Rate limiting:** política `auth` (janela fixa 10/min por IP) em login/demo; política `refresh` (janela fixa 30/min por
+IP, própria: o cookie rotativo não se adivinha e a SPA renova a cada recarga, então dividir o balde do login derrubaria
+sessões); limitador global token bucket 120/min por usuário (ou IP se anônimo); 429 com `Retry-After` em ProblemDetails.
 **Idempotência:** header opcional `Idempotency-Key` (≤ 100 chars) em `POST /apolices` e `POST /sinistros`:
 mesma chave + mesmo usuário + mesmo corpo → devolve a resposta gravada; corpo diferente → 422. Guarda 24 h.
+Só respostas 2xx são gravadas (erro não consome a chave); o corpo é comparado na forma canônica (reserializado, com
+decimais normalizados: `100` = `100.0`). A chave é reservada antes de executar: uma requisição simultânea com a mesma
+chave recebe 409 `Idempotencia.EmProcessamento` com `Retry-After` (ou 422 se o corpo for outro), nunca executa de novo.
 **Cookies:** refresh em `refresh_token` — `HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth; Max-Age=7d`.
 Endpoints `refresh`/`logout` exigem também o header `X-Requested-With: apolice-web` (defesa em profundidade contra CSRF).
 **Health:** `/health/live` (sem dependências), `/health/ready` (banco + broker), fora do versionamento.
@@ -404,7 +429,7 @@ configuração adicional do SSM Parameter Store via `Ssm:Prefixo` (ex.: `/apolic
 |---|---|---|
 | POST `/auth/login` | anônimo + rate `auth` | `LoginRequest{email,senha}` → 200 `AuthResponse` + cookie |
 | POST `/auth/demo` | anônimo + rate `auth` + flag `LoginDemo` | `LoginDemoRequest{persona: corretora|corretor|analista|admin}` → 200 `AuthResponse` + cookie |
-| POST `/auth/refresh` | cookie + header | → 200 `AuthResponse` + novo cookie |
+| POST `/auth/refresh` | cookie + header + rate `refresh` | → 200 `AuthResponse` + novo cookie (409 se duas renovações do mesmo cookie colidirem) |
 | POST `/auth/logout` | cookie + header | → 204 (revoga e limpa cookie) |
 | GET `/auth/me` | autenticado | → 200 `UsuarioDto` |
 | GET `/features` | anônimo | → 200 `FeaturesDto{loginDemo,triagemAutomaticaSinistros,documentoPdf,endossoOnline}` |
@@ -429,7 +454,8 @@ configuração adicional do SSM Parameter Store via `Ssm:Prefixo` (ex.: `/apolic
 | GET `/dashboard` | autenticado (escopo Carteira/Global) | → 200 `DashboardDto` |
 | GET `/admin/auditoria` | Admin | `?cursor&limite` → 200 `Pagina<AuditoriaDto>` |
 
-`limite`: 1–100 (padrão 20). `CotacaoRequest = {produtoCodigo, segurado{nome,cpf,email,dataNascimento}, dadosRisco{produto,...}, coberturas[{codigo,lmi?}]}`.
+`limite`: 1–100 (padrão 20). Login demo ligado em produção é risco aceito (portfólio): qualquer visitante entra como
+qualquer persona, inclusive Admin; a descrição do OpenAPI/Scalar avisa para não usar dados reais. `CotacaoRequest = {produtoCodigo, segurado{nome,cpf,email,dataNascimento}, dadosRisco{produto,...}, coberturas[{codigo,lmi?}]}`.
 
 DTOs principais (camelCase):
 - `AuthResponse {accessToken, expiraEm, usuario: UsuarioDto}`; `UsuarioDto {id, nome, email, papel}`.
@@ -455,6 +481,8 @@ Listagens mascaram CPF; o detalhe mostra o CPF completo para quem tem acesso.
 
 - `dotnet Apolice.Worker.dll migrate` → aplica migrations (Postgres: `Database.MigrateAsync`; DSQL: `DsqlMigrationRunner`).
 - `dotnet Apolice.Worker.dll seed` → `DataSeeder`.
+- Manutenção: o relay (host local, a cada 10 min; Lambda agendada, a cada execução) também apaga as respostas
+  idempotentes vencidas (`PurgaIdempotencia`, lotes de 500).
 - sem argumentos → host local: `OutboxRelayService` (a cada 2 s) + `RabbitMqConsumerService`
   (`RabbitMqConsumidor.ConsumirAsync`: prefetch 10, escopo de DI por mensagem, ack após o commit; falha →
   republicação com contador de tentativas e, na 5ª, nack sem requeue → DLQ — no RabbitMQ 4 o nack com requeue
@@ -491,9 +519,11 @@ métricas (ASP.NET Core, runtime, Meter `Apolice`); exportador OTLP só quando
 ## 11. Frontend (`frontend/`)
 
 Vite + React 19 + TypeScript strict, TanStack Query v5, React Router 7, React Hook Form + Zod,
-Tailwind CSS 4, componentes acessíveis (Radix), Recharts, `openapi-typescript` + `openapi-fetch`
-gerando o cliente tipado a partir de `docs/openapi/v1.json`. Access token só em memória; refresh
-automático (single-flight) em 401 via middleware do openapi-fetch; cookie HttpOnly no refresh.
+Tailwind CSS 4, componentes acessíveis (Radix), Recharts, `openapi-typescript` gerando os tipos a
+partir de `docs/openapi/v1.json`. Cliente HTTP próprio sobre `fetch` (`frontend/src/api/http.ts`, no
+lugar do `openapi-fetch` previsto): access token só em memória; refresh automático em 401,
+single-flight na aba e serializado entre abas (Web Locks), porque o refresh rotativo reapresentado
+revoga a família; cookie HttpOnly no refresh.
 Páginas: login (botões de persona demo + formulário), dashboard, cotações (lista + assistente de nova
 cotação com simulação ao vivo), detalhe da cotação, apólices (lista + detalhe com abas e ações:
 PDF, endosso, cancelamento com simulação), sinistros (lista + detalhe com linha do tempo e ações do
@@ -504,8 +534,12 @@ first (375 px), tema claro/escuro, pt-BR (moeda e datas). Vitest + Testing Libra
 
 - **API**: Lambda `dotnet10` (arm64, 1024 MB) com Function URL; **Worker**: Lambda SQS + Lambda
   agendada (relay). **Banco**: Aurora DSQL (IAM auth — sem senha de banco; papel de aplicação com
-  privilégio mínimo). **Fila**: SQS + DLQ. **Segredos**: SSM Parameter Store (SecureString).
+  privilégio mínimo). **Fila**: SQS + DLQ. **Segredos**: SSM Parameter Store (SecureString); só a API recebe
+  `Ssm:Prefixo` e permissão de leitura (a chave do JWT não chega ao consumidor nem ao relay).
   **IaC**: Terraform (state em S3 com lockfile). **CI/CD**: GitHub Actions com OIDC (sem chaves longas).
+  O `terraform apply` troca o código das Lambdas antes do passo de migrations: toda migration tem de ser compatível com
+  a versão anterior do código (expand/contract: acrescentar antes, remover só num deploy seguinte). No primeiro deploy
+  a API sobe antes de o papel `apolice_app` existir e responde 503 no `/health/ready` até o migrate terminar.
 - **Frontend**: Vercel; `vercel.json` reescreve `/api/*`, `/scalar/*`, `/openapi/*` para a Function URL
   (mesma origem para o browser → cookie first-party, sem CORS).
 
@@ -533,9 +567,9 @@ Em env var use `__` no lugar de `:` (ex.: `Database__Provider`). Nada de segredo
 | `Seed:SenhaUsuarios` | — | obrigatório fora de Development |
 | `Seed:DadosDemo` | `true` | |
 | `Redis:ConnectionString` | — | opcional (L2 do HybridCache) |
-| `Ssm:Prefixo` | ex.: `/apolice/prod` | se presente, carrega parâmetros do SSM |
+| `Ssm:Prefixo` | ex.: `/apolice/prod` | se presente, carrega parâmetros do SSM (em produção, só na API) |
 | `FeatureManagement:LoginDemo`/`TriagemAutomaticaSinistros`/`DocumentoPdf`/`EndossoOnline` | `true` | |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` / `OTEL_SERVICE_NAME` | — / `apolice-api` \| `apolice-worker` | exportador só se definido |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` / `OTEL_SERVICE_NAME` | — / `apolice-api` \| `apolice-worker` \| `apolice-outbox-relay` | exportador só se definido |
 
 Portas locais: API `8080` (container) / `5080` (`dotnet run`), frontend dev `5173` (proxy `/api` → API),
 Postgres `5432`, RabbitMQ `5672`/`15672`, Aspire Dashboard `18888` (UI) e `4317` (OTLP).

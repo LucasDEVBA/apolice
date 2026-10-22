@@ -6,7 +6,9 @@ using Microsoft.Extensions.Logging;
 namespace Apolice.Infrastructure.Outbox;
 
 // Relay do outbox (Worker local a cada Outbox:IntervaloSegundos; Lambda agendada em produção): publica as pendentes
-// em ordem de ocorrência. Cada mensagem é marcada sozinha (ExecuteUpdate), sem transação longa: uma falha no meio do
+// em ordem de ocorrência, mas as que já falharam vão para o fim da fila (menos tentativas primeiro): uma mensagem que
+// falha sempre não pode ocupar a cabeça do lote para sempre e travar os eventos novos. Os consumidores não dependem
+// de ordem (cada evento é independente e o inbox deduplica). Cada mensagem é marcada sozinha (ExecuteUpdate), sem transação longa: uma falha no meio do
 // lote não desfaz o que já saiu. Publicar duas vezes (relay + despacho imediato ao mesmo tempo) é aceitável — o
 // inbox do consumidor deduplica pelo id.
 public sealed partial class OutboxDispatcher(ApoliceDbContext db, IMessageBus bus, TimeProvider tempo, ILogger<OutboxDispatcher> logger)
@@ -18,7 +20,8 @@ public sealed partial class OutboxDispatcher(ApoliceDbContext db, IMessageBus bu
 
         var pendentes = await db.Outbox.AsNoTracking()
             .Where(m => m.ProcessadoEm == null)
-            .OrderBy(m => m.OcorridoEm)
+            .OrderBy(m => m.Tentativas)
+            .ThenBy(m => m.OcorridoEm)
             .ThenBy(m => m.Id)
             .Take(lote)
             .ToListAsync(cancellationToken);

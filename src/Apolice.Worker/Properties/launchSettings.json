@@ -1,11 +1,34 @@
-﻿{
+{
   "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
     "Apolice.Worker": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "environmentVariables": {
-        "DOTNET_ENVIRONMENT": "Development"
+        "DOTNET_ENVIRONMENT": "Development",
+        "ConnectionStrings__Apolice": "Host=localhost;Port=5432;Database=apolice;Username=apolice;Password=apolice-dev",
+        "Messaging__RabbitMq__Username": "apolice",
+        "Messaging__RabbitMq__Password": "apolice-dev"
+      }
+    },
+    "migrate": {
+      "commandName": "Project",
+      "commandLineArgs": "migrate",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development",
+        "ConnectionStrings__Apolice": "Host=localhost;Port=5432;Database=apolice;Username=apolice;Password=apolice-dev",
+        "Messaging__RabbitMq__Username": "apolice",
+        "Messaging__RabbitMq__Password": "apolice-dev"
+      }
+    },
+    "seed": {
+      "commandName": "Project",
+      "commandLineArgs": "seed",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development",
+        "ConnectionStrings__Apolice": "Host=localhost;Port=5432;Database=apolice;Username=apolice;Password=apolice-dev",
+        "Messaging__RabbitMq__Username": "apolice",
+        "Messaging__RabbitMq__Password": "apolice-dev"
       }
     }
   }

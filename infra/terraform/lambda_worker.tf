@@ -61,7 +61,7 @@ resource "aws_lambda_function" "relay" {
   source_code_hash = filebase64sha256(var.worker_zip_path)
 
   environment {
-    variables = local.ambiente_worker
+    variables = local.ambiente_relay
   }
 
   logging_config {

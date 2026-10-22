@@ -98,22 +98,31 @@ data "aws_iam_policy_document" "lambda" {
     resources = ["${aws_cloudwatch_log_group.lambda[each.key].arn}:*"]
   }
 
+  # Só a API lê o Parameter Store (a chave do JWT); consumidor e relay não recebem Ssm__Prefixo (locals.tf).
   # GetParametersByPath é autorizado no ARN do próprio caminho; Get(s) nos parâmetros abaixo dele.
-  statement {
-    sid       = "ParametrosDoAmbiente"
-    actions   = ["ssm:GetParametersByPath", "ssm:GetParameter", "ssm:GetParameters"]
-    resources = [local.ssm_parametros_arn, "${local.ssm_parametros_arn}/*"]
+  dynamic "statement" {
+    for_each = each.key == "api" ? [1] : []
+
+    content {
+      sid       = "ParametrosDoAmbiente"
+      actions   = ["ssm:GetParametersByPath", "ssm:GetParameter", "ssm:GetParameters"]
+      resources = [local.ssm_parametros_arn, "${local.ssm_parametros_arn}/*"]
+    }
   }
 
-  statement {
-    sid       = "DecifrarSomenteViaSsm"
-    actions   = ["kms:Decrypt"]
-    resources = [data.aws_kms_alias.ssm.target_key_arn]
+  dynamic "statement" {
+    for_each = each.key == "api" ? [1] : []
 
-    condition {
-      test     = "StringEquals"
-      variable = "kms:ViaService"
-      values   = ["ssm.${var.aws_region}.amazonaws.com"]
+    content {
+      sid       = "DecifrarSomenteViaSsm"
+      actions   = ["kms:Decrypt"]
+      resources = [data.aws_kms_alias.ssm.target_key_arn]
+
+      condition {
+        test     = "StringEquals"
+        variable = "kms:ViaService"
+        values   = ["ssm.${var.aws_region}.amazonaws.com"]
+      }
     }
   }
 

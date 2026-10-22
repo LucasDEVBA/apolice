@@ -7,21 +7,20 @@ using Npgsql;
 namespace Apolice.Infrastructure.Persistence.Provedores;
 
 // Um único NpgsqlDataSource (pool) por processo, usado pelo EF (UseNpgsql(dataSource)), pelo Dapper e pelo numerador.
-// No DSQL a autenticação é por token IAM (sem senha): o token vem do UsePeriodicPasswordProvider, que o gera de forma
-// assíncrona em segundo plano e o reaproveita em todas as conexões físicas até a próxima renovação. Assim o registro
-// em DI é síncrono (sem sync-over-async, que o DsqlDataSource.CreateAsync exigiria) e nenhuma abertura de conexão
-// paga a assinatura SigV4. As credenciais são resolvidas a cada renovação pela cadeia padrão do SDK, o que cobre
-// rotação de credenciais na Lambda.
+// No DSQL a autenticação é por token IAM (sem senha), gerado a CADA abertura de conexão física (UsePasswordProvider).
+// Um provedor periódico (timer) não serve na Lambda: o processo congela entre invocações, o timer não roda, e depois
+// de um congelamento maior que a validade do token a primeira conexão nova abriria com token vencido (erro de
+// autenticação, que não é transitório). A assinatura SigV4 é local e barata, e só acontece quando o pool abre uma
+// conexão física. O registro em DI continua síncrono (sem o DsqlDataSource.CreateAsync, que exigiria sync-over-async),
+// e as credenciais são resolvidas a cada token pela cadeia padrão do SDK, o que cobre a rotação na Lambda.
 internal static class FonteDadosNpgsql
 {
     private const string BancoDsql = "postgres";
     private const int PortaDsql = 5432;
     private const string NomeAplicacao = "apolice";
 
-    // O token IAM vale 15 min; renovar aos 10 deixa margem para conexões abertas perto da troca.
+    // O token só é conferido no handshake da conexão: a validade cobre apenas o intervalo entre gerar e conectar.
     private static readonly TimeSpan ValidadeToken = TimeSpan.FromMinutes(15);
-    private static readonly TimeSpan RenovacaoToken = TimeSpan.FromMinutes(10);
-    private static readonly TimeSpan RetentativaToken = TimeSpan.FromSeconds(10);
 
     // O DSQL encerra conexões com 1 h; reciclar antes evita o erro no meio de uma transação.
     private static readonly TimeSpan VidaMaximaConexao = TimeSpan.FromMinutes(55);
@@ -61,12 +60,13 @@ internal static class FonteDadosNpgsql
         var regiao = RegionEndpoint.GetBySystemName(RegiaoDoEndpoint(host));
         var admin = opcoes.UsuarioAdmin;
         var builder = new NpgsqlDataSourceBuilder(conexao.ConnectionString);
-        builder.UsePeriodicPasswordProvider(
+        builder.UsePasswordProvider(
+            _ => admin
+                ? DSQLAuthTokenGenerator.GenerateDbConnectAdminAuthToken(regiao, host, ValidadeToken)
+                : DSQLAuthTokenGenerator.GenerateDbConnectAuthToken(regiao, host, ValidadeToken),
             async (_, _) => admin
                 ? await DSQLAuthTokenGenerator.GenerateDbConnectAdminAuthTokenAsync(regiao, host, ValidadeToken)
-                : await DSQLAuthTokenGenerator.GenerateDbConnectAuthTokenAsync(regiao, host, ValidadeToken),
-            RenovacaoToken,
-            RetentativaToken);
+                : await DSQLAuthTokenGenerator.GenerateDbConnectAuthTokenAsync(regiao, host, ValidadeToken));
         return builder;
     }
 

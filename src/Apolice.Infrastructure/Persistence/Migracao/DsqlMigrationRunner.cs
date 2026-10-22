@@ -20,8 +20,20 @@ internal sealed partial class DsqlMigrationRunner(
     ILogger<DsqlMigrationRunner> logger)
 {
     private const int TentativasOcc = 5;
+
+    // A construção de um índice numa tabela grande passa fácil dos 30 s padrão do comando; o deploy tem timeout próprio.
+    private const int TimeoutEsperaIndiceSegundos = 15 * 60;
+    private const string TabelaAuditoria = "auditoria";
+    private const string PrivilegiosCompletos = "SELECT, INSERT, UPDATE, DELETE";
+
+    // A trilha de auditoria é só de inserção: a aplicação comprometida não consegue apagá-la nem reescrevê-la.
+    private const string PrivilegiosSoInsercao = "SELECT, INSERT";
+
     private static readonly TimeSpan EsperaOcc = TimeSpan.FromMilliseconds(250);
-    private static readonly string[] JaExiste = ["42P07", "42710", "42701", "42P06", "42P16"];
+
+    // Só "o objeto já existe" de verdade: tabela/índice (42P07), papel ou restrição (42710), coluna (42701), schema
+    // (42P06). Um DDL inválido de uma migration futura tem de falhar o deploy, nunca ser registrado como aplicado.
+    private static readonly string[] JaExiste = ["42P07", "42710", "42701", "42P06"];
 
     public async Task AplicarAsync(CancellationToken cancellationToken)
     {
@@ -64,8 +76,9 @@ internal sealed partial class DsqlMigrationRunner(
         }
     }
 
-    // CREATE INDEX ASYNC devolve o id do job de construção; esperar por ele garante que índices únicos já valem
-    // quando a aplicação subir. A espera é best-effort: se o sys.wait_for_job falhar, o índice segue sendo construído.
+    // CREATE INDEX ASYNC devolve o id do job de construção; esperar por ele garante que índices únicos já valem quando a
+    // aplicação subir. Job que termina em falha (ex.: UNIQUE com duplicatas) derruba o deploy: registrar a migration
+    // como aplicada deixaria o schema sem a garantia. Só a indisponibilidade da própria espera é tolerada.
     private async Task CriarIndiceAsync(string sql, CancellationToken cancellationToken)
     {
         var job = await ComRetentativaAsync(async conexao =>
@@ -79,11 +92,12 @@ internal sealed partial class DsqlMigrationRunner(
             return;
         }
 
+        object? concluido;
         try
         {
-            await ComRetentativaAsync(async conexao =>
+            concluido = await ComRetentativaAsync(async conexao =>
             {
-                await using var espera = new NpgsqlCommand("SELECT sys.wait_for_job(@job)", conexao);
+                await using var espera = new NpgsqlCommand("SELECT sys.wait_for_job(@job)", conexao) { CommandTimeout = TimeoutEsperaIndiceSegundos };
                 espera.Parameters.AddWithValue("job", job.ToString()!);
                 return await espera.ExecuteScalarAsync(cancellationToken);
             }, "sys.wait_for_job", cancellationToken);
@@ -91,6 +105,12 @@ internal sealed partial class DsqlMigrationRunner(
         catch (PostgresException ex)
         {
             LogEsperaIndiceFalhou(logger, ex, job.ToString());
+            return;
+        }
+
+        if (concluido is false)
+        {
+            throw new InvalidOperationException($"DSQL: o job {job} de construção do índice terminou em falha (consulte sys.jobs): {Resumo(sql)}");
         }
     }
 
@@ -113,30 +133,81 @@ internal sealed partial class DsqlMigrationRunner(
             await ExecutarAsync($"CREATE ROLE {identificador} WITH LOGIN", cancellationToken);
         }
 
-        foreach (var arn in configuracao.AppRoleArns)
-        {
-            await ExecutarAsync($"AWS IAM GRANT {identificador} TO '{arn}'", cancellationToken);
-        }
-
-        if (configuracao.AppRoleArns.Count == 0)
-        {
-            LogSemArns(logger, papel);
-        }
+        await VincularRolesIamAsync(identificador, papel, configuracao.AppRoleArns, cancellationToken);
 
         await ExecutarAsync($"GRANT USAGE ON SCHEMA public TO {identificador}", cancellationToken);
         foreach (var tabela in Tabelas())
         {
-            await ExecutarAsync($"GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE \"{tabela}\" TO {identificador}", cancellationToken);
+            var privilegios = string.Equals(tabela, TabelaAuditoria, StringComparison.Ordinal) ? PrivilegiosSoInsercao : PrivilegiosCompletos;
+            await ExecutarAsync($"GRANT {privilegios} ON TABLE \"{tabela}\" TO {identificador}", cancellationToken);
         }
 
         LogPapel(logger, papel, configuracao.AppRoleArns.Count);
     }
 
+    // O vínculo vigente vem de sys.iam_pg_role_mappings, como o papel vem de pg_roles: só os ARNs que faltam recebem
+    // AWS IAM GRANT (repetir o GRANT depende de como o DSQL responde, o que não foi verificado). Os que saíram da
+    // configuração recebem AWS IAM REVOKE, mas só quando TODOS os configurados já constavam da visão: isso prova que o
+    // formato do ARN gravado é o mesmo do configurado; sem essa prova, revogar poderia cortar o acesso da aplicação.
+    // Configuração vazia nunca revoga. Se a visão não puder ser lida, volta ao GRANT de todos, tolerando o "já existe".
+    private async Task VincularRolesIamAsync(string identificador, string papel, ICollection<string> arns, CancellationToken cancellationToken)
+    {
+        if (arns.Count == 0)
+        {
+            LogSemArns(logger, papel);
+            return;
+        }
+
+        var vinculados = await ArnsVinculadosAsync(papel, cancellationToken);
+        var faltantes = arns.Where(a => vinculados?.Contains(a) != true).ToList();
+        foreach (var arn in faltantes)
+        {
+            await ExecutarAsync($"AWS IAM GRANT {identificador} TO '{arn}'", cancellationToken, toleraJaVinculado: true);
+        }
+
+        if (vinculados is null || faltantes.Count > 0)
+        {
+            return;
+        }
+
+        foreach (var arn in vinculados.Except(arns, StringComparer.Ordinal).Where(a => !a.Contains('\'', StringComparison.Ordinal)))
+        {
+            await ExecutarAsync($"AWS IAM REVOKE {identificador} FROM '{arn}'", cancellationToken);
+            LogArnRevogado(logger, papel);
+        }
+    }
+
+    private async Task<HashSet<string>?> ArnsVinculadosAsync(string papel, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await ComRetentativaAsync(async conexao =>
+            {
+                await using var comando = new NpgsqlCommand("SELECT arn FROM sys.iam_pg_role_mappings WHERE pg_role_name = @papel", conexao);
+                comando.Parameters.AddWithValue("papel", papel);
+                var arns = new HashSet<string>(StringComparer.Ordinal);
+                await using var leitor = await comando.ExecuteReaderAsync(cancellationToken);
+                while (await leitor.ReadAsync(cancellationToken))
+                {
+                    arns.Add(leitor.GetString(0));
+                }
+
+                return arns;
+            }, "sys.iam_pg_role_mappings", cancellationToken);
+        }
+        catch (PostgresException ex)
+        {
+            LogMapeamentosIndisponiveis(logger, ex);
+            return null;
+        }
+    }
+
     private IEnumerable<string> Tabelas() =>
         db.Model.GetEntityTypes().Select(t => t.GetTableName()).OfType<string>().Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal);
 
-    // Reexecução: objeto que já existe (tabela, índice, vínculo IAM) é o estado desejado, não erro.
-    private async Task ExecutarAsync(string sql, CancellationToken cancellationToken)
+    // Reexecução: objeto que já existe (tabela, índice, papel) é o estado desejado, não erro. O casamento por texto
+    // ("already") vale só para o AWS IAM GRANT, cujo código de erro na repetição não é documentado.
+    private async Task ExecutarAsync(string sql, CancellationToken cancellationToken, bool toleraJaVinculado = false)
     {
         try
         {
@@ -146,7 +217,8 @@ internal sealed partial class DsqlMigrationRunner(
                 return await comando.ExecuteNonQueryAsync(cancellationToken);
             }, sql, cancellationToken);
         }
-        catch (PostgresException ex) when (JaExiste.Contains(ex.SqlState) || ex.MessageText.Contains("already", StringComparison.OrdinalIgnoreCase))
+        catch (PostgresException ex) when (JaExiste.Contains(ex.SqlState)
+            || (toleraJaVinculado && ex.MessageText.Contains("already", StringComparison.OrdinalIgnoreCase)))
         {
             LogJaExiste(logger, ex.SqlState, Resumo(sql));
         }
@@ -186,6 +258,12 @@ internal sealed partial class DsqlMigrationRunner(
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "DSQL: Database:AppRoleArns vazio; o papel {Papel} não foi vinculado a nenhuma role IAM.")]
     private static partial void LogSemArns(ILogger logger, string papel);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "DSQL: sys.iam_pg_role_mappings indisponível; AWS IAM GRANT para todos os ARNs configurados.")]
+    private static partial void LogMapeamentosIndisponiveis(ILogger logger, Exception excecao);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "DSQL: uma role IAM que saiu de Database:AppRoleArns foi desvinculada do papel {Papel}.")]
+    private static partial void LogArnRevogado(ILogger logger, string papel);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "DSQL: papel {Papel} com GRANTs aplicados e {Arns} role(s) IAM vinculada(s).")]
     private static partial void LogPapel(ILogger logger, string papel, int arns);

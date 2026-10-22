@@ -18,8 +18,12 @@ internal sealed class CatalogoProdutosCache(HybridCache cache, IServiceScopeFact
     internal const string Chave = "produtos:v1";
     internal const string Tag = "produtos";
     private static readonly TimeSpan Expiracao = TimeSpan.FromMinutes(10);
+
+    // A invalidação por tag só limpa a memória da instância que atualizou a taxa (sem Redis, em produção, cada Lambda tem
+    // a sua): o L1 curto limita a 1 min o tempo em que outra instância ainda tarifa com a taxa antiga.
+    private static readonly TimeSpan ExpiracaoLocal = TimeSpan.FromMinutes(1);
     private static readonly string[] Tags = [Tag];
-    private static readonly HybridCacheEntryOptions Opcoes = new() { Expiration = Expiracao, LocalCacheExpiration = Expiracao };
+    private static readonly HybridCacheEntryOptions Opcoes = new() { Expiration = Expiracao, LocalCacheExpiration = ExpiracaoLocal };
 
     public async Task<IReadOnlyList<Produto>> ListarAsync(CancellationToken cancellationToken)
     {

@@ -79,13 +79,15 @@ locals {
     Database__DsqlUser       = local.dsql_usuario_app
     Messaging__Transport     = "Sqs"
     Messaging__Sqs__QueueUrl = aws_sqs_queue.eventos.url
-    Ssm__Prefixo             = local.ssm_prefixo
   }
 
   # A API publica o outbox logo após o commit (latência baixa); o relay agendado cobre as falhas.
   # Sem Cors__Origens (SPEC §12/§13): o browser só fala com a Vercel, que reescreve para a
   # Function URL na mesma origem; liberar uma origem aqui seria superfície sem uso.
+  # Ssm__Prefixo só na API: o único parâmetro sob ele é a chave de assinatura do JWT, que o consumidor e o relay não
+  # usam. Com ela, uma dessas funções comprometida conseguiria forjar access tokens da API.
   ambiente_api = merge(local.ambiente_comum, {
+    Ssm__Prefixo             = local.ssm_prefixo
     ASPNETCORE_ENVIRONMENT   = "Production"
     Outbox__DispatchImediato = "true"
     OTEL_SERVICE_NAME        = local.funcoes.api
@@ -96,5 +98,10 @@ locals {
     DOTNET_ENVIRONMENT       = "Production"
     Outbox__DispatchImediato = "false"
     OTEL_SERVICE_NAME        = local.funcoes.worker
+  })
+
+  # Nome de serviço próprio: logs e traces do relay não se confundem com os do consumidor.
+  ambiente_relay = merge(local.ambiente_worker, {
+    OTEL_SERVICE_NAME = local.funcoes.relay
   })
 }

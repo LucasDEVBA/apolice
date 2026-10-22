@@ -88,24 +88,48 @@ public sealed class ServicosTests(PostgresFixture postgres) : TesteComBanco(post
     }
 
     [Fact]
-    public async Task Deve_devolver_a_resposta_gravada_sem_sobrescrever_enquanto_a_chave_vale()
+    public async Task Deve_reservar_a_chave_uma_unica_vez_e_devolver_a_resposta_concluida_enquanto_vale()
     {
         var armazem = Ambiente.Provedor.GetRequiredService<IArmazemIdempotencia>();
         var usuario = Guid.CreateVersion7();
         var agora = Ambiente.Tempo.GetUtcNow();
-        var primeira = new RespostaIdempotente(new string('a', 64), 201, "application/json", "{\"id\":1}");
-        var segunda = new RespostaIdempotente(new string('b', 64), 201, "application/json", "{\"id\":2}");
+        var hashA = new string('a', 64);
+        var hashB = new string('b', 64);
+        var resposta = new RespostaIdempotente(hashA, 201, "application/json", "{\"id\":1}");
 
-        (await armazem.ObterAsync(usuario, "chave-1", agora, Ct)).ShouldBeNull();
-        (await armazem.RegistrarAsync(usuario, "chave-1", primeira, agora, Ct)).ShouldBeTrue();
-        (await armazem.RegistrarAsync(usuario, "chave-1", segunda, agora.AddMinutes(1), Ct)).ShouldBeFalse();
-        (await armazem.ObterAsync(usuario, "chave-1", agora.AddHours(23), Ct)).ShouldBe(primeira);
-        (await armazem.ObterAsync(Guid.CreateVersion7(), "chave-1", agora, Ct)).ShouldBeNull();
+        (await armazem.ReservarAsync(usuario, "chave-1", hashA, agora, Ct)).Estado.ShouldBe(EstadoReservaIdempotencia.Reservada);
+        var concorrente = await armazem.ReservarAsync(usuario, "chave-1", hashB, agora, Ct);
+        concorrente.Estado.ShouldBe(EstadoReservaIdempotencia.EmProcessamento);
+        concorrente.Existente!.HashRequisicao.ShouldBe(hashA);
 
-        // Vencida (24 h): some da leitura e pode ser reutilizada.
+        (await armazem.ConcluirAsync(usuario, "chave-1", resposta, agora, Ct)).ShouldBeTrue();
+        (await armazem.ConcluirAsync(usuario, "chave-1", resposta with { Corpo = "{}" }, agora, Ct)).ShouldBeFalse();
+        var repetida = await armazem.ReservarAsync(usuario, "chave-1", hashA, agora.AddHours(23), Ct);
+        repetida.Estado.ShouldBe(EstadoReservaIdempotencia.Concluida);
+        repetida.Existente.ShouldBe(resposta);
+        (await armazem.ReservarAsync(Guid.CreateVersion7(), "chave-1", hashA, agora, Ct)).Estado.ShouldBe(EstadoReservaIdempotencia.Reservada);
+
+        // Vencida (24 h): some da leitura, é purgada e a chave pode ser reutilizada.
         (await armazem.ObterAsync(usuario, "chave-1", agora.AddHours(25), Ct)).ShouldBeNull();
-        (await armazem.RegistrarAsync(usuario, "chave-1", segunda, agora.AddHours(25), Ct)).ShouldBeTrue();
-        (await armazem.ObterAsync(usuario, "chave-1", agora.AddHours(26), Ct)).ShouldBe(segunda);
+        (await armazem.PurgarVencidosAsync(agora.AddHours(25), 100, Ct)).ShouldBeGreaterThanOrEqualTo(1);
+        (await armazem.ReservarAsync(usuario, "chave-1", hashB, agora.AddHours(25), Ct)).Estado.ShouldBe(EstadoReservaIdempotencia.Reservada);
+    }
+
+    [Fact]
+    public async Task Deve_liberar_a_chave_quando_a_execucao_falha_e_quando_a_reserva_fica_orfa()
+    {
+        var armazem = Ambiente.Provedor.GetRequiredService<IArmazemIdempotencia>();
+        var usuario = Guid.CreateVersion7();
+        var agora = Ambiente.Tempo.GetUtcNow();
+        var hash = new string('c', 64);
+
+        (await armazem.ReservarAsync(usuario, "falhou", hash, agora, Ct)).Estado.ShouldBe(EstadoReservaIdempotencia.Reservada);
+        await armazem.LiberarAsync(usuario, "falhou", Ct);
+        (await armazem.ReservarAsync(usuario, "falhou", hash, agora, Ct)).Estado.ShouldBe(EstadoReservaIdempotencia.Reservada);
+
+        (await armazem.ReservarAsync(usuario, "orfa", hash, agora, Ct)).Estado.ShouldBe(EstadoReservaIdempotencia.Reservada);
+        (await armazem.ReservarAsync(usuario, "orfa", hash, agora.AddMinutes(1), Ct)).Estado.ShouldBe(EstadoReservaIdempotencia.EmProcessamento);
+        (await armazem.ReservarAsync(usuario, "orfa", hash, agora.AddMinutes(3), Ct)).Estado.ShouldBe(EstadoReservaIdempotencia.Reservada);
     }
 
     [Fact]

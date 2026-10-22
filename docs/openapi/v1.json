@@ -1,26 +1,5040 @@
 {
   "openapi": "3.1.1",
   "info": {
-    "title": "Apolice.Api | v1",
-    "version": "1.0.0"
+    "title": "Apólice API",
+    "description": "Cotação, emissão e gestão de apólices de seguro (Auto, Residencial e Vida), com endosso, cancelamento e sinistro. Erros seguem a RFC 9457 (ProblemDetails) com type urn:apolice:problema:{codigo}. Demonstração pública: o login por persona dá acesso a qualquer perfil, inclusive Admin; não use dados reais.",
+    "version": "v1"
   },
   "paths": {
-    "/health/live": {
-      "get": {
+    "/api/v1/auth/login": {
+      "post": {
         "tags": [
-          "Apolice.Api"
+          "Autenticação"
         ],
+        "summary": "Entrar com e-mail e senha",
+        "description": "Devolve o access token (15 min) e grava o refresh token rotativo no cookie HttpOnly refresh_token. E-mail inexistente e senha errada respondem igual; a 5ª falha seguida bloqueia a conta por 15 minutos.",
+        "operationId": "Login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
+      }
+    },
+    "/api/v1/auth/demo": {
+      "post": {
+        "tags": [
+          "Autenticação"
+        ],
+        "summary": "Entrar como persona de demonstração",
+        "description": "Personas: corretora, corretor, analista e admin. Disponível enquanto a flag LoginDemo estiver ligada. Demonstração pública: qualquer visitante entra como qualquer persona (inclusive Admin), então não use dados reais.",
+        "operationId": "LoginDemo",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDemoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "tags": [
+          "Autenticação"
+        ],
+        "summary": "Renovar a sessão",
+        "description": "Troca o refresh token do cookie por um novo par (rotação). Reapresentar um token já trocado encerra todas as sessões daquele login. 409 = duas renovações simultâneas do mesmo cookie (ex.: duas abas): tente de novo.",
+        "operationId": "RenovarSessao",
+        "parameters": [
+          {
+            "name": "X-Requested-With",
+            "in": "header",
+            "description": "Sempre \"apolice-web\" (defesa contra CSRF).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "refresh_token",
+            "in": "cookie",
+            "description": "Refresh token gravado pelo login (HttpOnly).",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": [
+          "Autenticação"
+        ],
+        "summary": "Encerrar a sessão",
+        "description": "Revoga o refresh token do cookie (e a família dele) e apaga o cookie. Idempotente.",
+        "operationId": "Logout",
+        "parameters": [
+          {
+            "name": "X-Requested-With",
+            "in": "header",
+            "description": "Sempre \"apolice-web\" (defesa contra CSRF).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "refresh_token",
+            "in": "cookie",
+            "description": "Refresh token gravado pelo login (HttpOnly).",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "tags": [
+          "Autenticação"
+        ],
+        "summary": "Usuário autenticado",
+        "operationId": "ObterUsuarioAtual",
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/features": {
+      "get": {
+        "tags": [
+          "Sistema"
+        ],
+        "summary": "Feature flags ligadas",
+        "description": "Anônimo: a tela de login decide por aqui se mostra os botões de persona de demonstração.",
+        "operationId": "ObterFeatures",
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeaturesDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dashboard": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Indicadores da carteira",
+        "description": "Escopo Carteira para o corretor (só a dele) e Global para Analista e Admin.",
+        "operationId": "ObterDashboard",
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/produtos": {
+      "get": {
+        "tags": [
+          "Produtos"
+        ],
+        "summary": "Catálogo de produtos",
+        "description": "Produtos com coberturas, taxas e faixas de LMI (leitura em cache).",
+        "operationId": "ListarProdutos",
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProdutoDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/produtos/{codigo}": {
+      "get": {
+        "tags": [
+          "Produtos"
+        ],
+        "summary": "Detalhe de um produto",
+        "operationId": "ObterProduto",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProdutoDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/produtos/{codigo}/coberturas/{coberturaCodigo}/taxa": {
+      "put": {
+        "tags": [
+          "Produtos"
+        ],
+        "summary": "Atualizar a taxa de uma cobertura",
+        "description": "Só Admin. Vale para novas cotações e endossos; apólices emitidas mantêm o prêmio contratado.",
+        "operationId": "AtualizarTaxaCobertura",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "coberturaCodigo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AtualizarTaxaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProdutoDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/cotacoes/simular": {
+      "post": {
+        "tags": [
+          "Cotações"
+        ],
+        "summary": "Simular uma cotação",
+        "description": "Calcula prêmio, IOF, fatores e parcelas sem gravar nada (simulação ao vivo do assistente).",
+        "operationId": "SimularCotacao",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CotacaoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TarifacaoDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/cotacoes": {
+      "post": {
+        "tags": [
+          "Cotações"
+        ],
+        "summary": "Criar uma cotação",
+        "description": "Tarifa com o catálogo vigente e grava a cotação (válida por 30 dias) na carteira do corretor.",
+        "operationId": "CriarCotacao",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CotacaoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CotacaoDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      },
+      "get": {
+        "tags": [
+          "Cotações"
+        ],
+        "summary": "Listar cotações",
+        "description": "Paginação por cursor. Corretor vê só a própria carteira; Analista e Admin veem todas.",
+        "operationId": "ListarCotacoes",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/StatusEfetivoCotacao"
+            }
+          },
+          {
+            "name": "produto",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "busca",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limite",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaOfCotacaoResumoDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/cotacoes/{id}": {
+      "get": {
+        "tags": [
+          "Cotações"
+        ],
+        "summary": "Detalhe de uma cotação",
+        "operationId": "ObterCotacao",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CotacaoDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/cotacoes/{id}/aceitar": {
+      "post": {
+        "tags": [
+          "Cotações"
+        ],
+        "summary": "Aceitar uma cotação",
+        "description": "Só a cotação calculada e dentro da validade; a aceita pode ser emitida.",
+        "operationId": "AceitarCotacao",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CotacaoDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/cotacoes/{id}/recusar": {
+      "post": {
+        "tags": [
+          "Cotações"
+        ],
+        "summary": "Recusar uma cotação",
+        "operationId": "RecusarCotacao",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CotacaoDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/apolices": {
+      "post": {
+        "tags": [
+          "Apólices"
+        ],
+        "summary": "Emitir uma apólice",
+        "description": "A partir de uma cotação aceita e válida: início da vigência entre hoje e hoje + 30 dias, parcelas entre 1 e o máximo da cotação. Aceita Idempotency-Key.",
+        "operationId": "EmitirApolice",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Chave única por intenção (ex.: UUID). Repetir a mesma chave com o mesmo corpo devolve a resposta original.",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmitirApoliceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApoliceDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      },
+      "get": {
+        "tags": [
+          "Apólices"
+        ],
+        "summary": "Listar apólices",
+        "description": "Paginação por cursor; status é o efetivo (Programada, Ativa, Vencida, Cancelada). CPF mascarado.",
+        "operationId": "ListarApolices",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/StatusEfetivoApolice"
+            }
+          },
+          {
+            "name": "produto",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "busca",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limite",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaOfApoliceResumoDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/apolices/{id}": {
+      "get": {
+        "tags": [
+          "Apólices"
+        ],
+        "summary": "Detalhe de uma apólice",
+        "description": "Com coberturas, cronograma de parcelas, endossos, sinistros e notificações enviadas.",
+        "operationId": "ObterApolice",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApoliceDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/apolices/{id}/documento": {
+      "get": {
+        "tags": [
+          "Apólices"
+        ],
+        "summary": "Baixar o PDF da apólice",
+        "description": "Documento gerado na hora a partir do mesmo conteúdo do detalhe. Requer a flag DocumentoPdf.",
+        "operationId": "BaixarDocumentoApolice",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/apolices/{id}/endossos/simular": {
+      "post": {
+        "tags": [
+          "Apólices"
+        ],
+        "summary": "Simular um endosso",
+        "description": "Ajuste pro rata do prêmio pela nova tarifação do conjunto alterado. Requer a flag EndossoOnline.",
+        "operationId": "SimularEndosso",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EndossoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulacaoEndossoDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/apolices/{id}/endossos": {
+      "post": {
+        "tags": [
+          "Apólices"
+        ],
+        "summary": "Endossar a apólice",
+        "description": "Alteração de LMI, inclusão ou exclusão de cobertura. Requer a flag EndossoOnline.",
+        "operationId": "EndossarApolice",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EndossoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApoliceDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/apolices/{id}/cancelamento/simular": {
+      "post": {
+        "tags": [
+          "Apólices"
+        ],
+        "summary": "Simular o cancelamento",
+        "description": "Restituição integral (antes do início), prazo curto (pedido do segurado) ou pro rata die.",
+        "operationId": "SimularCancelamento",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelamentoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulacaoCancelamentoDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/apolices/{id}/cancelamento": {
+      "post": {
+        "tags": [
+          "Apólices"
+        ],
+        "summary": "Cancelar a apólice",
+        "operationId": "CancelarApolice",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelamentoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApoliceDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/sinistros": {
+      "post": {
+        "tags": [
+          "Sinistros"
+        ],
+        "summary": "Abrir um sinistro",
+        "description": "Ocorrência até hoje, dentro da vigência (e antes do cancelamento), numa cobertura que permite sinistro. A triagem automática roda em segundo plano. Aceita Idempotency-Key.",
+        "operationId": "AbrirSinistro",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Chave única por intenção (ex.: UUID). Repetir a mesma chave com o mesmo corpo devolve a resposta original.",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbrirSinistroRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SinistroDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      },
+      "get": {
+        "tags": [
+          "Sinistros"
+        ],
+        "summary": "Listar sinistros",
+        "description": "Paginação por cursor. Corretor vê os da própria carteira; Analista e Admin veem todos.",
+        "operationId": "ListarSinistros",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/StatusSinistro"
+            }
+          },
+          {
+            "name": "busca",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limite",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaOfSinistroResumoDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/sinistros/{id}": {
+      "get": {
+        "tags": [
+          "Sinistros"
+        ],
+        "summary": "Detalhe de um sinistro",
+        "description": "Com triagem e linha do tempo das decisões.",
+        "operationId": "ObterSinistro",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SinistroDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/sinistros/{id}/analise": {
+      "post": {
+        "tags": [
+          "Sinistros"
+        ],
+        "summary": "Iniciar a análise",
+        "operationId": "IniciarAnaliseSinistro",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SinistroDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/sinistros/{id}/aprovacao": {
+      "post": {
+        "tags": [
+          "Sinistros"
+        ],
+        "summary": "Aprovar o sinistro",
+        "description": "Indenização maior que zero e até o menor entre o valor reclamado e o LMI da cobertura.",
+        "operationId": "AprovarSinistro",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AprovarSinistroRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SinistroDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/sinistros/{id}/negativa": {
+      "post": {
+        "tags": [
+          "Sinistros"
+        ],
+        "summary": "Negar o sinistro",
+        "operationId": "NegarSinistro",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NegarSinistroRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SinistroDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/sinistros/{id}/pagamento": {
+      "post": {
+        "tags": [
+          "Sinistros"
+        ],
+        "summary": "Registrar o pagamento da indenização",
+        "operationId": "RegistrarPagamentoSinistro",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SinistroDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/auditoria": {
+      "get": {
+        "tags": [
+          "Administração"
+        ],
+        "summary": "Trilha de auditoria",
+        "description": "Ações sensíveis (login, emissão, endosso, cancelamento, decisões de sinistro, tarifas), mais recentes primeiro.",
+        "operationId": "ListarAuditoria",
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limite",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaOfAuditoriaDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AbrirSinistroRequest": {
+        "required": [
+          "apoliceId",
+          "coberturaCodigo",
+          "dataOcorrencia",
+          "descricao",
+          "valorReclamado"
+        ],
+        "type": "object",
+        "properties": {
+          "apoliceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "coberturaCodigo": {
+            "type": "string"
+          },
+          "dataOcorrencia": {
+            "type": "string",
+            "format": "date"
+          },
+          "descricao": {
+            "type": "string"
+          },
+          "valorReclamado": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "ApoliceDto": {
+        "required": [
+          "id",
+          "numero",
+          "cotacaoId",
+          "produtoCodigo",
+          "produtoNome",
+          "segurado",
+          "dadosRisco",
+          "vigenciaInicio",
+          "vigenciaFim",
+          "coberturas",
+          "premioLiquido",
+          "ajustesEndosso",
+          "premioLiquidoVigente",
+          "aliquotaIof",
+          "iof",
+          "premioTotal",
+          "parcelas",
+          "cronogramaParcelas",
+          "status",
+          "emitidaEm",
+          "canceladaEm",
+          "motivoCancelamento",
+          "valorRestituicao",
+          "boasVindasEnviadasEm",
+          "corretorId",
+          "corretorNome",
+          "endossos",
+          "sinistros",
+          "notificacoes"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "numero": {
+            "type": "string"
+          },
+          "cotacaoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "produtoCodigo": {
+            "type": "string"
+          },
+          "produtoNome": {
+            "type": "string"
+          },
+          "segurado": {
+            "$ref": "#/components/schemas/SeguradoDto"
+          },
+          "dadosRisco": {
+            "$ref": "#/components/schemas/DadosRisco"
+          },
+          "vigenciaInicio": {
+            "type": "string",
+            "format": "date"
+          },
+          "vigenciaFim": {
+            "type": "string",
+            "format": "date"
+          },
+          "coberturas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoberturaApoliceDto"
+            }
+          },
+          "premioLiquido": {
+            "type": "number",
+            "format": "double"
+          },
+          "ajustesEndosso": {
+            "type": "number",
+            "format": "double"
+          },
+          "premioLiquidoVigente": {
+            "type": "number",
+            "format": "double"
+          },
+          "aliquotaIof": {
+            "type": "number",
+            "format": "double"
+          },
+          "iof": {
+            "type": "number",
+            "format": "double"
+          },
+          "premioTotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "parcelas": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cronogramaParcelas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ParcelaDto"
+            }
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusEfetivoApolice"
+          },
+          "emitidaEm": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "canceladaEm": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "motivoCancelamento": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MotivoCancelamento"
+              }
+            ]
+          },
+          "valorRestituicao": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "boasVindasEnviadasEm": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "corretorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "corretorNome": {
+            "type": "string"
+          },
+          "endossos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EndossoDto"
+            }
+          },
+          "sinistros": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SinistroResumoDto"
+            }
+          },
+          "notificacoes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificacaoDto"
+            }
+          }
+        }
+      },
+      "ApoliceResumoDto": {
+        "required": [
+          "id",
+          "numero",
+          "produtoCodigo",
+          "seguradoNome",
+          "seguradoCpfMascarado",
+          "premioTotal",
+          "vigenciaInicio",
+          "vigenciaFim",
+          "status",
+          "corretorNome",
+          "emitidaEm"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "numero": {
+            "type": "string"
+          },
+          "produtoCodigo": {
+            "type": "string"
+          },
+          "seguradoNome": {
+            "type": "string"
+          },
+          "seguradoCpfMascarado": {
+            "type": "string"
+          },
+          "premioTotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "vigenciaInicio": {
+            "type": "string",
+            "format": "date"
+          },
+          "vigenciaFim": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusEfetivoApolice"
+          },
+          "corretorNome": {
+            "type": "string"
+          },
+          "emitidaEm": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AprovarSinistroRequest": {
+        "required": [
+          "valorIndenizacao"
+        ],
+        "type": "object",
+        "properties": {
+          "valorIndenizacao": {
+            "type": "number",
+            "format": "double"
+          },
+          "observacao": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "AtualizarTaxaRequest": {
+        "required": [
+          "taxa"
+        ],
+        "type": "object",
+        "properties": {
+          "taxa": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "AuditoriaDto": {
+        "required": [
+          "id",
+          "usuarioNome",
+          "acao",
+          "entidade",
+          "entidadeId",
+          "detalhes",
+          "correlationId",
+          "ocorridoEm"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "usuarioNome": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "acao": {
+            "type": "string"
+          },
+          "entidade": {
+            "type": "string"
+          },
+          "entidadeId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "detalhes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "correlationId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ocorridoEm": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AuthResponse": {
+        "required": [
+          "accessToken",
+          "expiraEm",
+          "usuario"
+        ],
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "expiraEm": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "usuario": {
+            "$ref": "#/components/schemas/UsuarioDto"
+          }
+        }
+      },
+      "CancelamentoRequest": {
+        "required": [
+          "motivo"
+        ],
+        "type": "object",
+        "properties": {
+          "motivo": {
+            "$ref": "#/components/schemas/MotivoCancelamento"
+          }
+        }
+      },
+      "CoberturaApoliceDto": {
+        "required": [
+          "codigo",
+          "nome",
+          "lmi",
+          "premioLiquido",
+          "obrigatoria",
+          "permiteSinistro"
+        ],
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "lmi": {
+            "type": "number",
+            "format": "double"
+          },
+          "premioLiquido": {
+            "type": "number",
+            "format": "double"
+          },
+          "obrigatoria": {
+            "type": "boolean"
+          },
+          "permiteSinistro": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CoberturaProdutoDto": {
+        "required": [
+          "codigo",
+          "nome",
+          "descricao",
+          "obrigatoria",
+          "tipoCalculo",
+          "taxa",
+          "premioFixo",
+          "lmiMinimo",
+          "lmiMaximo",
+          "lmiFixo",
+          "permiteSinistro"
+        ],
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "descricao": {
+            "type": "string"
+          },
+          "obrigatoria": {
+            "type": "boolean"
+          },
+          "tipoCalculo": {
+            "$ref": "#/components/schemas/TipoCalculo"
+          },
+          "taxa": {
+            "type": "number",
+            "format": "double"
+          },
+          "premioFixo": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "lmiMinimo": {
+            "type": "number",
+            "format": "double"
+          },
+          "lmiMaximo": {
+            "type": "number",
+            "format": "double"
+          },
+          "lmiFixo": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "permiteSinistro": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CoberturaRequest": {
+        "required": [
+          "codigo"
+        ],
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string"
+          },
+          "lmi": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "CotacaoDto": {
+        "required": [
+          "id",
+          "produtoCodigo",
+          "produtoNome",
+          "segurado",
+          "dadosRisco",
+          "itens",
+          "fatores",
+          "premioLiquido",
+          "aliquotaIof",
+          "iof",
+          "premioTotal",
+          "maxParcelas",
+          "status",
+          "validaAte",
+          "criadaEm",
+          "corretorId",
+          "corretorNome",
+          "apoliceId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "produtoCodigo": {
+            "type": "string"
+          },
+          "produtoNome": {
+            "type": "string"
+          },
+          "segurado": {
+            "$ref": "#/components/schemas/SeguradoDto"
+          },
+          "dadosRisco": {
+            "$ref": "#/components/schemas/DadosRisco"
+          },
+          "itens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemTarifadoDto"
+            }
+          },
+          "fatores": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FatorDto"
+            }
+          },
+          "premioLiquido": {
+            "type": "number",
+            "format": "double"
+          },
+          "aliquotaIof": {
+            "type": "number",
+            "format": "double"
+          },
+          "iof": {
+            "type": "number",
+            "format": "double"
+          },
+          "premioTotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "maxParcelas": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusEfetivoCotacao"
+          },
+          "validaAte": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "criadaEm": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "corretorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "corretorNome": {
+            "type": "string"
+          },
+          "apoliceId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "CotacaoRequest": {
+        "required": [
+          "produtoCodigo",
+          "segurado",
+          "dadosRisco",
+          "coberturas"
+        ],
+        "type": "object",
+        "properties": {
+          "produtoCodigo": {
+            "type": "string"
+          },
+          "segurado": {
+            "$ref": "#/components/schemas/SeguradoRequest"
+          },
+          "dadosRisco": {
+            "$ref": "#/components/schemas/DadosRisco"
+          },
+          "coberturas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoberturaRequest"
+            }
+          }
+        }
+      },
+      "CotacaoResumoDto": {
+        "required": [
+          "id",
+          "produtoCodigo",
+          "seguradoNome",
+          "premioTotal",
+          "status",
+          "validaAte",
+          "criadaEm",
+          "corretorNome"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "produtoCodigo": {
+            "type": "string"
+          },
+          "seguradoNome": {
+            "type": "string"
+          },
+          "premioTotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusEfetivoCotacao"
+          },
+          "validaAte": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "criadaEm": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "corretorNome": {
+            "type": "string"
+          }
+        }
+      },
+      "DadosRisco": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/DadosRiscoAuto"
+          },
+          {
+            "$ref": "#/components/schemas/DadosRiscoResidencial"
+          },
+          {
+            "$ref": "#/components/schemas/DadosRiscoVida"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "produto",
+          "mapping": {
+            "AUTO": "#/components/schemas/DadosRiscoAuto",
+            "RESID": "#/components/schemas/DadosRiscoResidencial",
+            "VIDA": "#/components/schemas/DadosRiscoVida"
+          }
+        }
+      },
+      "DadosRiscoAuto": {
+        "required": [
+          "valorVeiculo",
+          "anoFabricacao",
+          "cepPernoite",
+          "idadeCondutor",
+          "usoComercial",
+          "classeBonus",
+          "produto"
+        ],
+        "type": "object",
+        "properties": {
+          "produto": {
+            "enum": [
+              "AUTO"
+            ],
+            "type": "string"
+          },
+          "valorVeiculo": {
+            "type": "number",
+            "format": "double"
+          },
+          "anoFabricacao": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cepPernoite": {
+            "type": "string"
+          },
+          "idadeCondutor": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "usoComercial": {
+            "type": "boolean"
+          },
+          "classeBonus": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "DadosRiscoResidencial": {
+        "required": [
+          "valorImovel",
+          "tipoImovel",
+          "cep",
+          "habitual",
+          "produto"
+        ],
+        "type": "object",
+        "properties": {
+          "produto": {
+            "enum": [
+              "RESID"
+            ],
+            "type": "string"
+          },
+          "valorImovel": {
+            "type": "number",
+            "format": "double"
+          },
+          "tipoImovel": {
+            "$ref": "#/components/schemas/TipoImovel"
+          },
+          "cep": {
+            "type": "string"
+          },
+          "habitual": {
+            "type": "boolean"
+          }
+        }
+      },
+      "DadosRiscoVida": {
+        "required": [
+          "fumante",
+          "produto"
+        ],
+        "type": "object",
+        "properties": {
+          "produto": {
+            "enum": [
+              "VIDA"
+            ],
+            "type": "string"
+          },
+          "fumante": {
+            "type": "boolean"
+          }
+        }
+      },
+      "DashboardDto": {
+        "required": [
+          "escopo",
+          "apolicesAtivas",
+          "premioEmitidoMes",
+          "premioEmitido12Meses",
+          "cotacoesAbertas",
+          "taxaConversao90d",
+          "sinistrosEmAberto",
+          "sinistralidade12m",
+          "porProduto"
+        ],
+        "type": "object",
+        "properties": {
+          "escopo": {
+            "$ref": "#/components/schemas/EscopoDashboard"
+          },
+          "apolicesAtivas": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "premioEmitidoMes": {
+            "type": "number",
+            "format": "double"
+          },
+          "premioEmitido12Meses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PremioMensalDto"
+            }
+          },
+          "cotacoesAbertas": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "taxaConversao90d": {
+            "type": "number",
+            "format": "double"
+          },
+          "sinistrosEmAberto": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sinistralidade12m": {
+            "type": "number",
+            "format": "double"
+          },
+          "porProduto": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProdutoDashboardDto"
+            }
+          }
+        }
+      },
+      "EmitirApoliceRequest": {
+        "required": [
+          "cotacaoId",
+          "inicioVigencia",
+          "parcelas"
+        ],
+        "type": "object",
+        "properties": {
+          "cotacaoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "inicioVigencia": {
+            "type": "string",
+            "format": "date"
+          },
+          "parcelas": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "EndossoDto": {
+        "required": [
+          "id",
+          "numero",
+          "tipo",
+          "coberturaCodigo",
+          "coberturaNome",
+          "lmiAnterior",
+          "lmiNovo",
+          "dataEfeito",
+          "ajusteLiquido",
+          "iofAjuste",
+          "ajusteTotal",
+          "criadoEm",
+          "criadoPorNome"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "numero": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoEndosso"
+          },
+          "coberturaCodigo": {
+            "type": "string"
+          },
+          "coberturaNome": {
+            "type": "string"
+          },
+          "lmiAnterior": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "lmiNovo": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "dataEfeito": {
+            "type": "string",
+            "format": "date"
+          },
+          "ajusteLiquido": {
+            "type": "number",
+            "format": "double"
+          },
+          "iofAjuste": {
+            "type": "number",
+            "format": "double"
+          },
+          "ajusteTotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "criadoEm": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "criadoPorNome": {
+            "type": "string"
+          }
+        }
+      },
+      "EndossoRequest": {
+        "required": [
+          "tipo",
+          "coberturaCodigo"
+        ],
+        "type": "object",
+        "properties": {
+          "tipo": {
+            "$ref": "#/components/schemas/TipoEndosso"
+          },
+          "coberturaCodigo": {
+            "type": "string"
+          },
+          "lmi": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "EscopoDashboard": {
+        "enum": [
+          "Carteira",
+          "Global"
+        ],
+        "type": "string"
+      },
+      "FatorDto": {
+        "required": [
+          "descricao",
+          "fator"
+        ],
+        "type": "object",
+        "properties": {
+          "descricao": {
+            "type": "string"
+          },
+          "fator": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "FeaturesDto": {
+        "required": [
+          "loginDemo",
+          "triagemAutomaticaSinistros",
+          "documentoPdf",
+          "endossoOnline"
+        ],
+        "type": "object",
+        "properties": {
+          "loginDemo": {
+            "type": "boolean"
+          },
+          "triagemAutomaticaSinistros": {
+            "type": "boolean"
+          },
+          "documentoPdf": {
+            "type": "boolean"
+          },
+          "endossoOnline": {
+            "type": "boolean"
+          }
+        }
+      },
+      "HistoricoSinistroDto": {
+        "required": [
+          "status",
+          "observacao",
+          "usuarioNome",
+          "ocorridoEm"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/StatusSinistro"
+          },
+          "observacao": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "usuarioNome": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ocorridoEm": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "HttpValidationProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "codigo": {
+            "type": "string",
+            "description": "Código estável do erro (ex.: Cotacao.Expirada); também no sufixo do type."
+          },
+          "traceId": {
+            "type": "string",
+            "description": "Trace do OpenTelemetry da requisição."
+          },
+          "correlationId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Mesmo valor do header X-Correlation-Id."
+          }
+        }
+      },
+      "ItemTarifadoDto": {
+        "required": [
+          "codigo",
+          "nome",
+          "lmi",
+          "premioLiquido",
+          "obrigatoria",
+          "permiteSinistro"
+        ],
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "lmi": {
+            "type": "number",
+            "format": "double"
+          },
+          "premioLiquido": {
+            "type": "number",
+            "format": "double"
+          },
+          "obrigatoria": {
+            "type": "boolean"
+          },
+          "permiteSinistro": {
+            "type": "boolean"
+          }
+        }
+      },
+      "LoginDemoRequest": {
+        "required": [
+          "persona"
+        ],
+        "type": "object",
+        "properties": {
+          "persona": {
+            "enum": [
+              "corretora",
+              "corretor",
+              "analista",
+              "admin"
+            ],
+            "type": "string"
+          }
+        }
+      },
+      "LoginRequest": {
+        "required": [
+          "email",
+          "senha"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "senha": {
+            "type": "string"
+          }
+        }
+      },
+      "MetodoCancelamento": {
+        "enum": [
+          "Integral",
+          "PrazoCurto",
+          "ProRataDie"
+        ],
+        "type": "string"
+      },
+      "MotivoCancelamento": {
+        "enum": [
+          "PedidoDoSegurado",
+          "IniciativaSeguradora",
+          "Inadimplencia"
+        ],
+        "type": "string"
+      },
+      "NegarSinistroRequest": {
+        "required": [
+          "motivo"
+        ],
+        "type": "object",
+        "properties": {
+          "motivo": {
+            "type": "string"
+          }
+        }
+      },
+      "NotificacaoDto": {
+        "required": [
+          "id",
+          "tipo",
+          "destinatario",
+          "assunto",
+          "corpo",
+          "criadaEm"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoNotificacao"
+          },
+          "destinatario": {
+            "type": "string"
+          },
+          "assunto": {
+            "type": "string"
+          },
+          "corpo": {
+            "type": "string"
+          },
+          "criadaEm": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PaginaOfApoliceResumoDto": {
+        "required": [
+          "itens",
+          "proximoCursor"
+        ],
+        "type": "object",
+        "properties": {
+          "itens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApoliceResumoDto"
+            }
+          },
+          "proximoCursor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "PaginaOfAuditoriaDto": {
+        "required": [
+          "itens",
+          "proximoCursor"
+        ],
+        "type": "object",
+        "properties": {
+          "itens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditoriaDto"
+            }
+          },
+          "proximoCursor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "PaginaOfCotacaoResumoDto": {
+        "required": [
+          "itens",
+          "proximoCursor"
+        ],
+        "type": "object",
+        "properties": {
+          "itens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CotacaoResumoDto"
+            }
+          },
+          "proximoCursor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "PaginaOfSinistroResumoDto": {
+        "required": [
+          "itens",
+          "proximoCursor"
+        ],
+        "type": "object",
+        "properties": {
+          "itens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SinistroResumoDto"
+            }
+          },
+          "proximoCursor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "Papel": {
+        "enum": [
+          "Corretor",
+          "Analista",
+          "Admin"
+        ],
+        "type": "string"
+      },
+      "ParcelaDto": {
+        "required": [
+          "numero",
+          "vencimento",
+          "valor"
+        ],
+        "type": "object",
+        "properties": {
+          "numero": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "vencimento": {
+            "type": "string",
+            "format": "date"
+          },
+          "valor": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "PremioMensalDto": {
+        "required": [
+          "mes",
+          "valor"
+        ],
+        "type": "object",
+        "properties": {
+          "mes": {
+            "type": "string"
+          },
+          "valor": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "codigo": {
+            "type": "string",
+            "description": "Código estável do erro (ex.: Cotacao.Expirada); também no sufixo do type."
+          },
+          "traceId": {
+            "type": "string",
+            "description": "Trace do OpenTelemetry da requisição."
+          },
+          "correlationId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Mesmo valor do header X-Correlation-Id."
+          }
+        }
+      },
+      "ProdutoDashboardDto": {
+        "required": [
+          "produtoCodigo",
+          "produtoNome",
+          "apolicesAtivas",
+          "premioEmitido"
+        ],
+        "type": "object",
+        "properties": {
+          "produtoCodigo": {
+            "type": "string"
+          },
+          "produtoNome": {
+            "type": "string"
+          },
+          "apolicesAtivas": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "premioEmitido": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "ProdutoDto": {
+        "required": [
+          "codigo",
+          "nome",
+          "descricao",
+          "aliquotaIof",
+          "coberturas"
+        ],
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "descricao": {
+            "type": "string"
+          },
+          "aliquotaIof": {
+            "type": "number",
+            "format": "double"
+          },
+          "coberturas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoberturaProdutoDto"
+            }
+          }
+        }
+      },
+      "SeguradoDto": {
+        "required": [
+          "nome",
+          "cpf",
+          "email",
+          "dataNascimento"
+        ],
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "cpf": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "dataNascimento": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "SeguradoRequest": {
+        "required": [
+          "nome",
+          "cpf",
+          "email",
+          "dataNascimento"
+        ],
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "cpf": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "dataNascimento": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "SimulacaoCancelamentoDto": {
+        "required": [
+          "dataCancelamento",
+          "diasDecorridos",
+          "diasVigencia",
+          "metodo",
+          "percentualRetido",
+          "premioLiquidoBase",
+          "valorRestituicao"
+        ],
+        "type": "object",
+        "properties": {
+          "dataCancelamento": {
+            "type": "string",
+            "format": "date"
+          },
+          "diasDecorridos": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "diasVigencia": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "metodo": {
+            "$ref": "#/components/schemas/MetodoCancelamento"
+          },
+          "percentualRetido": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "premioLiquidoBase": {
+            "type": "number",
+            "format": "double"
+          },
+          "valorRestituicao": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "SimulacaoEndossoDto": {
+        "required": [
+          "dataEfeito",
+          "diasRestantes",
+          "diasVigencia",
+          "premioAnualAnterior",
+          "premioAnualNovo",
+          "ajusteLiquido",
+          "iofAjuste",
+          "ajusteTotal"
+        ],
+        "type": "object",
+        "properties": {
+          "dataEfeito": {
+            "type": "string",
+            "format": "date"
+          },
+          "diasRestantes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "diasVigencia": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "premioAnualAnterior": {
+            "type": "number",
+            "format": "double"
+          },
+          "premioAnualNovo": {
+            "type": "number",
+            "format": "double"
+          },
+          "ajusteLiquido": {
+            "type": "number",
+            "format": "double"
+          },
+          "iofAjuste": {
+            "type": "number",
+            "format": "double"
+          },
+          "ajusteTotal": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "SinistroDto": {
+        "required": [
+          "id",
+          "numero",
+          "apoliceId",
+          "apoliceNumero",
+          "produtoCodigo",
+          "seguradoNome",
+          "coberturaCodigo",
+          "coberturaNome",
+          "lmiCobertura",
+          "dataOcorrencia",
+          "descricao",
+          "valorReclamado",
+          "valorIndenizacao",
+          "status",
+          "motivoNegativa",
+          "triagem",
+          "abertoEm",
+          "corretorNome",
+          "historico"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "numero": {
+            "type": "string"
+          },
+          "apoliceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "apoliceNumero": {
+            "type": "string"
+          },
+          "produtoCodigo": {
+            "type": "string"
+          },
+          "seguradoNome": {
+            "type": "string"
+          },
+          "coberturaCodigo": {
+            "type": "string"
+          },
+          "coberturaNome": {
+            "type": "string"
+          },
+          "lmiCobertura": {
+            "type": "number",
+            "format": "double"
+          },
+          "dataOcorrencia": {
+            "type": "string",
+            "format": "date"
+          },
+          "descricao": {
+            "type": "string"
+          },
+          "valorReclamado": {
+            "type": "number",
+            "format": "double"
+          },
+          "valorIndenizacao": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusSinistro"
+          },
+          "motivoNegativa": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "triagem": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TriagemDto"
+              }
+            ]
+          },
+          "abertoEm": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "corretorNome": {
+            "type": "string"
+          },
+          "historico": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HistoricoSinistroDto"
+            }
+          }
+        }
+      },
+      "SinistroResumoDto": {
+        "required": [
+          "id",
+          "numero",
+          "apoliceNumero",
+          "seguradoNome",
+          "coberturaNome",
+          "valorReclamado",
+          "status",
+          "triagemScore",
+          "abertoEm"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "numero": {
+            "type": "string"
+          },
+          "apoliceNumero": {
+            "type": "string"
+          },
+          "seguradoNome": {
+            "type": "string"
+          },
+          "coberturaNome": {
+            "type": "string"
+          },
+          "valorReclamado": {
+            "type": "number",
+            "format": "double"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusSinistro"
+          },
+          "triagemScore": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "abertoEm": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "StatusEfetivoApolice": {
+        "enum": [
+          "Ativa",
+          "Programada",
+          "Vencida",
+          "Cancelada"
+        ],
+        "type": "string"
+      },
+      "StatusEfetivoCotacao": {
+        "enum": [
+          "Calculada",
+          "Aceita",
+          "Emitida",
+          "Recusada",
+          "Expirada"
+        ],
+        "type": "string"
+      },
+      "StatusSinistro": {
+        "enum": [
+          "Aberto",
+          "EmAnalise",
+          "Aprovado",
+          "Negado",
+          "Pago"
+        ],
+        "type": "string"
+      },
+      "TarifacaoDto": {
+        "required": [
+          "itens",
+          "fatores",
+          "premioLiquido",
+          "aliquotaIof",
+          "iof",
+          "premioTotal",
+          "maxParcelas"
+        ],
+        "type": "object",
+        "properties": {
+          "itens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemTarifadoDto"
+            }
+          },
+          "fatores": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FatorDto"
+            }
+          },
+          "premioLiquido": {
+            "type": "number",
+            "format": "double"
+          },
+          "aliquotaIof": {
+            "type": "number",
+            "format": "double"
+          },
+          "iof": {
+            "type": "number",
+            "format": "double"
+          },
+          "premioTotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "maxParcelas": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "TipoCalculo": {
+        "enum": [
+          "TaxaSobreLmi",
+          "TaxaPorMil",
+          "PremioFixo"
+        ],
+        "type": "string"
+      },
+      "TipoEndosso": {
+        "enum": [
+          "AlteracaoLmi",
+          "InclusaoCobertura",
+          "ExclusaoCobertura"
+        ],
+        "type": "string"
+      },
+      "TipoImovel": {
+        "enum": [
+          "Casa",
+          "Apartamento"
+        ],
+        "type": "string"
+      },
+      "TipoNotificacao": {
+        "enum": [
+          "BoasVindas",
+          "Endosso",
+          "Cancelamento",
+          "SinistroAberto",
+          "SinistroDecidido"
+        ],
+        "type": "string"
+      },
+      "TriagemDto": {
+        "required": [
+          "score",
+          "alertas",
+          "triadoEm"
+        ],
+        "type": "object",
+        "properties": {
+          "score": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "alertas": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "triadoEm": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UsuarioDto": {
+        "required": [
+          "id",
+          "nome",
+          "email",
+          "papel"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "papel": {
+            "$ref": "#/components/schemas/Papel"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "Bearer": {
+        "type": "http",
+        "description": "Access token devolvido por /api/v1/auth/login, /auth/demo ou /auth/refresh (validade de 15 minutos).",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
       }
     }
   },
   "tags": [
     {
-      "name": "Apolice.Api"
+      "name": "Autenticação"
+    },
+    {
+      "name": "Sistema"
+    },
+    {
+      "name": "Dashboard"
+    },
+    {
+      "name": "Produtos"
+    },
+    {
+      "name": "Cotações"
+    },
+    {
+      "name": "Apólices"
+    },
+    {
+      "name": "Sinistros"
+    },
+    {
+      "name": "Administração"
     }
   ]
 }

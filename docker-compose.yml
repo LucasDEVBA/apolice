@@ -152,6 +152,9 @@ services:
       Outbox__IntervaloSegundos: "2"
       Outbox__Lote: "50"
     depends_on: *depende-do-seed
+    # Acima do HostOptions.ShutdownTimeout (20 s) do Worker: o SIGTERM encerra relay e consumidor com calma (a mensagem
+    # em voo volta para a fila) antes de o Docker partir para o SIGKILL, que no padrão viria em 10 s.
+    stop_grace_period: 30s
     restart: unless-stopped
 
   aspire-dashboard:

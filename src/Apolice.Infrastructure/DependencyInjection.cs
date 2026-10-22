@@ -132,6 +132,11 @@ public static class DependencyInjection
         {
             opcoes.AddInterceptors(ActivatorUtilities.CreateInstance<OutboxDispatchImediatoInterceptor>(sp));
         }
+
+        if (sp.GetRequiredService<IOptions<DatabaseOptions>>().Value.Provider == ProvedorBanco.Dsql)
+        {
+            opcoes.AddInterceptors(new IsolamentoDsqlInterceptor());
+        }
     }
 
     private static void RegistrarLeitura(IServiceCollection services)

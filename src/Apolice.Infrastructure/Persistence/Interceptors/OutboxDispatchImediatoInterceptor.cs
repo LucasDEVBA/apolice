@@ -14,6 +14,11 @@ internal sealed partial class OutboxDispatchImediatoInterceptor(
     TimeProvider tempo,
     ILogger<OutboxDispatchImediatoInterceptor> logger) : SaveChangesInterceptor
 {
+    // O despacho roda dentro da requisição, depois do commit: um broker lento (SQS com o timeout padrão de 100 s e
+    // retentativas do SDK; RabbitMQ preso em flow control) seguraria a resposta até o timeout da Lambda, e o cliente
+    // repetiria uma operação já gravada. Passado o prazo, o que faltou fica pendente para o relay.
+    private static readonly TimeSpan PrazoPublicacao = TimeSpan.FromSeconds(3);
+
     private List<OutboxMessage> _gravadas = [];
 
     public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
@@ -67,14 +72,22 @@ internal sealed partial class OutboxDispatchImediatoInterceptor(
             ? []
             : [.. contexto.ChangeTracker.Entries<OutboxMessage>().Where(e => e.State == EntityState.Added).Select(e => e.Entity)];
 
-    // CancellationToken.None: o commit já aconteceu; o cancelamento do cliente não deve interromper a publicação.
+    // Sem o token do cliente: o commit já aconteceu e o cancelamento dele não deve interromper a publicação; só o prazo
+    // próprio interrompe. A marcação de processado não usa o prazo (publicada e não marcada seria republicada à toa).
     private async Task PublicarAsync(DbContext contexto, List<OutboxMessage> mensagens)
     {
+        using var prazo = new CancellationTokenSource(PrazoPublicacao, tempo);
         foreach (var mensagem in mensagens)
         {
+            if (prazo.IsCancellationRequested)
+            {
+                LogPrazoEsgotado(logger, mensagem.Id, mensagem.Tipo);
+                continue;
+            }
+
             try
             {
-                await bus.PublishAsync(mensagem.ParaMensagem(), CancellationToken.None);
+                await bus.PublishAsync(mensagem.ParaMensagem(), prazo.Token);
                 var agora = tempo.GetUtcNow();
                 await contexto.Set<OutboxMessage>()
                     .Where(m => m.Id == mensagem.Id && m.ProcessadoEm == null)
@@ -86,6 +99,9 @@ internal sealed partial class OutboxDispatchImediatoInterceptor(
             }
         }
     }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Despacho imediato da mensagem {MensagemId} ({Tipo}) não coube no prazo; fica para o relay do outbox.")]
+    private static partial void LogPrazoEsgotado(ILogger logger, Guid mensagemId, string tipo);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Despacho imediato da mensagem {MensagemId} ({Tipo}) falhou; o relay do outbox fará a nova tentativa.")]
     private static partial void LogFalhaDespacho(ILogger logger, Exception excecao, Guid mensagemId, string tipo);
