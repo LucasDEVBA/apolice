@@ -15,6 +15,7 @@
     <PackageReference Include="NSubstitute" />
     <PackageReference Include="Bogus" />
     <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <ProjectReference Include="..\..\src\Apolice.Application\Apolice.Application.csproj" />
   </ItemGroup>
   <ItemGroup>

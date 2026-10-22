@@ -110,7 +110,7 @@ Contraste medido (WCAG 2.1) no par indicado; texto normal exige 4,5:1 e componen
 | `--line` | `#DFE4EC` | `#233552` | Borda de card, cabeçalho de tabela |
 | `--line-soft` | `#ECEFF4` | `#1A2A44` | Divisórias internas, separador de KPI |
 | `--line-strong` | `#C5CDD9` | `#31466A` | Hover de botão secundário |
-| `--control` | `#8A95A6` (3,0:1) | `#6A7A93` (3,9:1) | Borda de input, checkbox, toggle desligado |
+| `--control` | `#7A8597` (3,7:1; 3,4 no canvas, 3,5 no surface-2, 3,3 na linha selecionada) | `#6A7A93` (3,9:1) | Borda de input, checkbox, toggle desligado (3:1 em qualquer fundo claro, não só no surface) |
 | `--selection` | `#E6D3A8` | `#16305A` | `::selection` |
 
 > No modo escuro o primário vira "porcelana" com texto marinho, como o botão "Endossar" sobre a face
@@ -175,6 +175,7 @@ Rótulos e estados vêm do SPEC (§4.3–4.5). O badge sempre mostra ponto/ícon
 | `--chart-1` | `#1D3B6B` (11,1:1) | `#6F9BDB` (5,9:1) | Série única (prêmio emitido) |
 | `--chart-accent` | `#B5862F` (3,3:1) | `#D4A84F` (7,7:1) | Mês corrente / destaque / projeção |
 | `--chart-ref` | `#7A5C2C` | `#D9BF8C` | Linha de média ou meta (tracejada 3 4) + rótulo |
+| `--chart-projection` | latão a 14% | `#D4A84F` a 28% | Preenchimento da projeção do mês (no escuro, 14% virava um cinza neutro) |
 | `--chart-grid` | `#E9EDF2` | `#1A2A44` | Linhas de grade |
 | `--chart-axis` | `#C9D0DA` | `#31466A` | Linha de base |
 | `--meter-track` | `#E7EBF1` | `#1A2A44` | Trilho de medidor (sinistralidade, vigência) |
@@ -350,7 +351,7 @@ O modo compacto vale só para tabelas e listas. Títulos, KPIs e formulários n�
   --line: light-dark(#DFE4EC, #233552);
   --line-soft: light-dark(#ECEFF4, #1A2A44);
   --line-strong: light-dark(#C5CDD9, #31466A);
-  --control: light-dark(#8A95A6, #6A7A93);
+  --control: light-dark(#7A8597, #6A7A93);
   --ok: light-dark(#1E6B47, #6FD19C);    --ok-bg: light-dark(#E6F2EB, #0F2A20);
   --warn: light-dark(#8A5700, #F0BD62);  --warn-bg: light-dark(#FBF0D9, #2E2310);
   --bad: light-dark(#A3302A, #F5A39A);   --bad-bg: light-dark(#FBE9E7, #3A1A1B);
@@ -419,8 +420,9 @@ Toast, DropdownMenu, RadioGroup, ToggleGroup).
   contador à direita (12/600 tabular). Hover: fundo branco a 5%. Ativo: `--sidebar-active`, texto branco
   600, ícone `--gold-line`, `aria-current="page"`. Restrito (Admin para não-admin): cadeado no lugar do
   contador, com `aria-label="Restrito ao perfil Admin"`.
-- **Filas salvas:** rótulo de seção "Filas salvas" 12/600 em `--on-navy-3`; itens de 36 px com ponto de 6 px
-  no tom do estado, rótulo 13,5 e contador. Por persona, com dados que o SPEC tem:
+- **Filas salvas:** rótulo de grupo "Filas salvas" 12/600 em `--on-navy-3` (grupo rotulado dentro do nav, não
+  `section`/`h2`); itens de 40 px (44 no drawer do mobile) com ponto de 6 px no tom do estado, rótulo 13,5 e
+  contador (12/600 tabular, quando a API informar). Por persona, com dados que o SPEC tem:
   - Corretor: "Cotações expirando (48 h)" (warn), "Renovações em 30 dias" (info), "Aceitas a emitir" (info).
   - Analista: "Sinistros abertos" (info), "Em análise" (warn).
   - Cada fila é um link para a lista com o filtro aplicado na URL.
@@ -431,8 +433,11 @@ Toast, DropdownMenu, RadioGroup, ToggleGroup).
   "Buscar apólice, segurado, CPF ou placa", `kbd` "⌘K"/"Ctrl K"). Ele é um botão que abre a **paleta de
   comandos** (Dialog + combobox), não um input.
 - À direita: chip "Demonstração" (`--gold-text` sobre `#F6EFE1`, 5,4:1; escuro `#D9BF8C` sobre `#2A2416`),
-  ajuda, notificações (ponto `--bad` + `aria-label="Notificações, 3 não lidas"`) e menu do usuário, com tema
-  (Sistema/Claro/Escuro em radio) e densidade.
+  ajuda, notificações (ponto `--bad` + `aria-label="Notificações, 3 não lidas"` só quando há não lidas; sem
+  API, painel vazio honesto) e menu de **Aparência**, com tema (Sistema/Claro/Escuro em radio) e densidade.
+- **Decisão:** no desktop a identidade do usuário (avatar, nome, papel, ⇄ "Trocar persona") fica só no rodapé
+  da sidebar/rail, como na referência; a topbar não repete um segundo avatar e o "menu do usuário" é o menu de
+  Aparência. No mobile, o avatar da top bar troca a persona e Tema/Densidade ficam no drawer (§5.2).
 - Na página de detalhe, o título não se repete na topbar: o breadcrumb fica no conteúdo, acima do H1.
 
 ### 4.4 Cartão KPI (faixa)
@@ -543,7 +548,9 @@ soma dos itens.
    texto do B) + CTA primário "Revisar cotação".
 
 Comportamento: simulação com debounce de 300 ms (`POST /cotacoes/simular`). Durante o recálculo, os
-valores ficam a 60% de opacidade, sem mudança de layout. A linha que mudou recebe um realce
+valores ficam a 60% de opacidade, sem mudança de layout. **Só os valores em `--ink`/`--on-navy` esmaecem**
+(a 60% ainda dão 4,6:1 e 6,3:1); rótulos, notas "fixo", chips de fator e a linha de parcelamento em
+`--gold-on-navy` ficam plenos, porque esmaecidos cairiam abaixo de 4,5:1. O `aria-busy` marca o painel. A linha que mudou recebe um realce
 (`--selection` a 40%, apagando em 900 ms). Uma região `aria-live="polite"` anuncia só o total, com debounce
 ("Prêmio total atualizado: R$ 4.581,08"). Se a simulação falhar, o último valor válido continua visível
 com "Desatualizado · Tentar de novo".
@@ -581,8 +588,10 @@ com "Desatualizado · Tentar de novo".
   ("R$ 4,08 mi" + "+14,2% vs. 12 meses anteriores").
 - Barras: largura 26 (mobile 14), raio superior 4, `--chart-1`; mês corrente em `--chart-accent`.
 - **Projeção do mês** (enxerto do C): a parte realizada é sólida e o restante projetado tem contorno
-  tracejado `--chart-accent` com preenchimento a 14%.
-- Média tracejada `--chart-ref` com rótulo "Média 340".
+  tracejado `--chart-accent` com preenchimento `--chart-projection` (14% no claro, 28% no escuro).
+- Média tracejada `--chart-ref` com rótulo "Média 340" **fora da área das barras**: no desktop, à direita do
+  plot (espaço reservado na margem); no mobile o rótulo sai do plot e o valor vai para a legenda
+  ("Média mensal · 340"). Rótulo sobre barra, mesmo com halo, é proibido como o tooltip estático (§10.1).
 - **Legenda explícita** no topo: Emitido · Projeção do mês · Média 12 m.
 - Grade `--chart-grid` com 4 marcas; eixos 12 `--ink-3`; ano sob o primeiro mês e sob janeiro.
 - **Tooltip só em hover/foco** (correção: nada estático cobrindo barras): `--brand-surface`, raio 8,
@@ -743,7 +752,7 @@ direta (o realce de cor da linha continua, porque não é movimento). No JS, um 
 | Perigo (branco/fundo, hover) | 7,0 · 8,6 | 5,9 · 5,0 |
 | Estados (ok, warn, bad, info, neutral) | 5,6 · 5,4 · 5,9 · 6,9 · 6,8 | 8,2 · 8,9 · 7,9 · 6,8 · 7,7 |
 | Sobre marinho (`--on-navy-3`, dourado, cancelar) | 6,0 · 9,3 · 8,3 | idem |
-| Borda de controle (3:1) | 3,0:1 | 3,9:1 |
+| Borda de controle (3:1) | 3,7:1 (3,3 no pior fundo, a linha selecionada) | 3,9:1 (3,5 no pior fundo) |
 | Séries de gráfico (3:1) | 8,0 · 3,2 · 3,3 | 4,2 · 10,9 · 7,7 |
 | Foco sobre marinho (dourado) | 7,3:1 | 8,6:1 (sidebar escura) |
 
