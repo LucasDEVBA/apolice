@@ -315,13 +315,16 @@ Regras dos handlers:
 - Interceptors: `DomainEventsToOutboxInterceptor` (SavingChanges: eventos → `OutboxMessage`),
   `VersaoInterceptor`, `OutboxDispatchImediatoInterceptor` (SavedChanges: publica as mensagens
   recém-gravadas, best-effort; o relay cobre falhas). Marcação de processado via `ExecuteUpdateAsync`.
-- Provedores (`Database:Provider`): `Postgres` (connection string) | `Dsql` (`Amazon.AuroraDsql.Npgsql`
-  → `DsqlDataSource.DataSource` → `UseNpgsql(dataSource)`), com estratégia de retry que inclui
-  SQLSTATE `40001`, `OC000`, `OC001`. Sem transações explícitas/savepoints no caminho normal.
+- Provedores (`Database:Provider`): `Postgres` (connection string) | `Dsql` (`NpgsqlDataSourceBuilder` com
+  `SslMode=VerifyFull` + `UsePeriodicPasswordProvider` gerando o token IAM pelo `DSQLAuthTokenGenerator` do
+  `AWSSDK.DSQL` → `UseNpgsql(dataSource)`; registro síncrono, sem o `DsqlDataSource.CreateAsync`, que exigiria
+  sync-over-async na composição), com estratégia de retry que inclui SQLSTATE `40001`, `OC000`, `OC001`.
+  Um único `NpgsqlDataSource` serve EF, Dapper e numerador. Sem transações explícitas/savepoints no caminho normal.
 - Migrations EF geradas com o provedor Postgres. `DsqlMigrationRunner` aplica no DSQL: um comando
   DDL por transação (autocommit), `CREATE [UNIQUE] INDEX` → `... ASYNC`, `CREATE TABLE/INDEX IF NOT EXISTS`
   (reexecutável), grava histórico do EF, depois `CREATE ROLE`/`AWS IAM GRANT`/`GRANT` do papel da
-  aplicação (`Database:AppRole`, `Database:AppRoleArn`). Sem partial index, sem trigger, sem sequence.
+  aplicação (`Database:AppRole`, `Database:AppRoleArns`). Sem partial index, sem trigger, sem sequence.
+  O Worker chama `IMigradorBanco.MigrarAsync`, que escolhe `Database.MigrateAsync` (Postgres) ou o runner (DSQL).
 - `Numerador` (INumerador): `INSERT ... ON CONFLICT (chave) DO UPDATE SET ultimo = numeradores.ultimo + 1 RETURNING ultimo`
   com retry de OCC. Chaves `APOLICE:{PRODUTO}:{ANO}` e `SINISTRO:{ANO}`. Lacunas são aceitas.
 - Leitura (Dapper, `Persistence/Queries`): listagens com paginação por cursor (keyset
@@ -330,12 +333,14 @@ Regras dos handlers:
   (`Id`, `Tipo`, `Payload`, `OcorridoEm`, `Traceparent?`, `CorrelationId?`). RabbitMQ: exchange topic
   `apolice.eventos`, fila quorum `apolice.worker` (`x-delivery-limit` 5, DLX `apolice.eventos.dlx` →
   `apolice.worker.dlq`), publisher confirms, mensagens persistentes. SQS: `SendMessage` com atributos
-  `tipo`, `traceparent`, `correlationId`. InMemory: despacha direto para `IIntegrationEventDispatcher` (testes).
+  `tipo`, `traceparent`, `correlationId` (+ `mensagemId` e `ocorridoEm`: o MessageId do SQS muda a cada reenvio).
+  InMemory: despacha direto para `IIntegrationEventDispatcher` (testes).
 - `OutboxDispatcher.DespacharPendentesAsync(int lote)` (ordem por `ocorrido_em`, incrementa
   `tentativas`, grava `ultimo_erro`).
 - Segurança: `PasswordHasher<Usuario>` (PBKDF2 do ASP.NET Core Identity), `JwtTokenService`
   (HS256, `Jwt:Issuer`, `Jwt:Audience`, `Jwt:SigningKey` ≥ 32 bytes, access 15 min com claims
   `sub`, `name`, `email`, `role`, `jti`), refresh token = 32 bytes aleatórios base64url, guardado como SHA-256.
+  A validação da chave no start é da API (`ExigirJwtNaInicializacao`): o Worker roda migrate/seed sem a chave.
 - Cache: `CatalogoProdutosCache` com `HybridCache` (chave `produtos:v1`, tag `produtos`, 10 min);
   L2 Redis opcional (`Redis:ConnectionString`). Invalidação por tag ao atualizar taxa.
 - `QuestPdfGeradorDocumentoApolice` (licença Community). `FeatureFlags` sobre `IFeatureManager`.
@@ -347,7 +352,7 @@ Regras dos handlers:
   gerar aleatória e logar só o aviso, nunca a senha). Dados de demonstração criados **pelos métodos
   do domínio** com datas passadas (≈10 apólices em 12 meses, cotações em todos os status, sinistros
   em todos os status, 2 endossos, 1 cancelamento).
-- `DependencyInjection.AddInfrastructure(IServiceCollection, IConfiguration)` registra tudo e valida
+- `DependencyInjection.AddInfrastructure(IServiceCollection, IConfiguration, IHostEnvironment)` registra tudo e valida
   options no start (`ValidateOnStart`).
 
 ### 6.1 Tabelas (snake_case)
@@ -451,7 +456,9 @@ Listagens mascaram CPF; o detalhe mostra o CPF completo para quem tem acesso.
 - `dotnet Apolice.Worker.dll migrate` → aplica migrations (Postgres: `Database.MigrateAsync`; DSQL: `DsqlMigrationRunner`).
 - `dotnet Apolice.Worker.dll seed` → `DataSeeder`.
 - sem argumentos → host local: `OutboxRelayService` (a cada 2 s) + `RabbitMqConsumerService`
-  (prefetch 10, escopo de DI por mensagem, ack/nack sem requeue → delivery-limit/DLQ).
+  (`RabbitMqConsumidor.ConsumirAsync`: prefetch 10, escopo de DI por mensagem, ack após o commit; falha →
+  republicação com contador de tentativas e, na 5ª, nack sem requeue → DLQ — no RabbitMQ 4 o nack com requeue
+  não conta para o `x-delivery-limit`, que segue valendo para queda do consumidor).
 - Lambda (produção): `Apolice.Worker::Apolice.Worker.Lambda.SqsFunction::HandleAsync`
   (`SQSEvent` → `SQSBatchResponse` com falhas parciais) e
   `Apolice.Worker::Apolice.Worker.Lambda.OutboxRelayFunction::HandleAsync` (agendada a cada 5 min).
