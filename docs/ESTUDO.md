@@ -534,8 +534,9 @@ private static Result<Guid> Autorizar(ICurrentUser usuario, Guid corretorId, str
 |---|---|---|---|
 | Domain | 548 | xUnit v3, Shouldly | Regras puras com valores exatos: tarifação, arredondamento, CPF, máquinas de estado, endosso, cancelamento, cronograma, triagem, bloqueio, refresh |
 | Application | 398 | xUnit v3, Shouldly, `FakeTimeProvider`, NSubstitute (só nas consultas de dashboard e auditoria) | Handlers com a DI real e fakes nas portas: escopo por carteira, fluxos, erros, idempotência do dispatcher, login e refresh, validators |
-| Integração: infraestrutura | 93 | Testcontainers (PostgreSQL, RabbitMQ) | Composição real contra banco real: migrations, mapeamento, versão, outbox, relay, RabbitMQ até a DLQ, consultas Dapper, seed, JWT, cache |
-| Integração: API e Worker | 64 | `WebApplicationFactory<Program>`, Testcontainers | A API inteira por HTTP (401/403/404/400/409/422/429/500, idempotency-key, cookie e rotação do refresh, anti-CSRF, headers, correlation id, health, OpenAPI, fluxo completo) e os handlers de Lambda e o host local do Worker |
+| Arquitetura | 32 | xUnit v3, ArchUnitNET | As regras de dependência da SPEC §3 entre as camadas, com controles positivos que provam que cada alvo detecta dependência, e as convenções de handler e de agregado |
+| Integração: infraestrutura | 94 | Testcontainers (PostgreSQL, RabbitMQ) | Composição real contra banco real: migrations, mapeamento, versão, outbox, relay, RabbitMQ até a DLQ, consultas Dapper, seed, JWT, cache |
+| Integração: API e Worker | 71 | `WebApplicationFactory<Program>`, Testcontainers | A API inteira por HTTP (401/403/404/400/409/422/429/500, idempotency-key, cookie e rotação do refresh, anti-CSRF, headers, correlation id, health, OpenAPI, fluxo completo) e os handlers de Lambda e o host local do Worker |
 | E2E | `frontend/e2e` | Playwright, stack no `docker compose` no CI | O fluxo da demo no navegador, em desktop e em 375 px |
 
 Nome de teste segue `Deve_<resultado>_quando_<condicao>`, que lê como especificação.
@@ -577,7 +578,12 @@ Em `tests/Apolice.Api.IntegrationTests/Worker/`, os handlers de Lambda são cham
 
 ### Arquitetura
 
-O projeto `Apolice.ArchitectureTests` (ArchUnitNET) ainda não tem regras. Enquanto isso, `Deve_referenciar_so_dominio_e_abstracoes_quando_compila_a_aplicacao` confere por reflexão que o assembly da Application não referencia Infrastructure, Api, Worker, EF Core, Npgsql, Dapper, ASP.NET Core, AWS nem RabbitMQ, e `DependencyInjectionTests` confere que os 40 handlers são `sealed`, terminam em `Handler` e resolvem pela DI.
+O projeto `Apolice.ArchitectureTests` (ArchUnitNET) tem 32 testes:
+
+- `DependenciasEntreCamadasTests`: 18 regras de dependência da SPEC §3 (o Domain não depende de nenhuma outra camada nem de EF Core, ASP.NET Core ou FluentValidation; a Application não depende de Infrastructure, Api, Worker, EF Core, Npgsql, Dapper, ASP.NET Core, AWS nem RabbitMQ; a Infrastructure não depende de Api nem de Worker) e 10 controles positivos. Sem os controles, um alvo digitado errado faria a regra passar sem verificar nada.
+- `ConvencoesTests`: 4 convenções. Os handlers dos três contratos são `sealed` e terminam em `Handler`, e os agregados não têm setter público, nem `init`.
+
+Além deles, `Deve_referenciar_so_dominio_e_abstracoes_quando_compila_a_aplicacao` (em `Apolice.Application.Tests`) confere por reflexão as referências do assembly da Application, e `DependencyInjectionTests` confere que os 40 handlers resolvem pela DI.
 
 ### No CI
 
@@ -736,4 +742,4 @@ O correlation id entra no contexto de log e na linha do outbox; o `traceparent` 
 Do `X-Forwarded-For`, porque quem conecta na Function URL é a Vercel. Como os IPs da Vercel não são fixos, a API aceita o header de qualquer remetente (`ForwardLimit = 1`), e quem chama a Function URL direto pode forjá-lo para trocar de partição no limite por IP. É um risco aceito e documentado; o limite por usuário autenticado não depende do IP, e a correção seria aceitar só tráfego do proxy. *Onde:* `src/Apolice.Api/Extensions/SegurancaExtensions.cs`, `Http/LimitesRequisicao.cs`.
 
 **38. O que faria diferente ou a seguir?**
-Regras no ArchUnitNET, teto de concorrência da API quando a cota permitir, aceitar só tráfego vindo do proxy, rate limiting e cache compartilhados entre instâncias (Redis ou borda), limpeza periódica do outbox e, se o negócio pedisse, restituição do IOF no cancelamento. *Onde:* seção "Próximos passos" do `README.md`.
+Teto de concorrência da API quando a cota permitir, aceitar só tráfego vindo do proxy, rate limiting e cache compartilhados entre instâncias (Redis ou borda), limpeza periódica do outbox e, se o negócio pedisse, restituição do IOF no cancelamento. *Onde:* seção "Próximos passos" do `README.md`.
