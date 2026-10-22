@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Security.Claims;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 
 namespace Apolice.Api.Http;
@@ -15,30 +16,41 @@ internal static class LimitesRequisicao
 {
     public const string PoliticaAuth = "auth";
     public const string PoliticaRefresh = "refresh";
-    private const int LimiteAuthPorJanela = 10;
-    private const int LimiteRefreshPorJanela = 30;
-    private const int LimiteGlobal = 120;
-    private const int FichasPorRecarga = 2;
     private const string IpDesconhecido = "desconhecido";
     private static readonly TimeSpan JanelaAuth = TimeSpan.FromMinutes(1);
     private static readonly TimeSpan PeriodoRecarga = TimeSpan.FromSeconds(1);
 
-    public static IServiceCollection AddLimitesRequisicao(this IServiceCollection services) =>
-        services.AddRateLimiter(opcoes =>
+    public static IServiceCollection AddLimitesRequisicao(this IServiceCollection services)
+    {
+        services.AddOptions<LimitesRequisicaoOptions>()
+            .BindConfiguration(LimitesRequisicaoOptions.Secao)
+            .Validate(o => o.AuthPorMinuto > 0 && o.RefreshPorMinuto > 0 && o.GlobalPorMinuto > 0 && o.FichasPorSegundo > 0,
+                "RateLimiting: todos os limites precisam ser maiores que zero.")
+            .ValidateOnStart();
+
+        return services.AddRateLimiter(opcoes =>
         {
             opcoes.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
             opcoes.OnRejected = RejeitarAsync;
-            opcoes.AddPolicy(PoliticaAuth, http => JanelaPorIp(http, LimiteAuthPorJanela));
-            opcoes.AddPolicy(PoliticaRefresh, http => JanelaPorIp(http, LimiteRefreshPorJanela));
-            opcoes.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(http => RateLimitPartition.GetTokenBucketLimiter(ChaveGlobal(http), _ => new TokenBucketRateLimiterOptions
+            opcoes.AddPolicy(PoliticaAuth, http => JanelaPorIp(http, Limites(http).AuthPorMinuto));
+            opcoes.AddPolicy(PoliticaRefresh, http => JanelaPorIp(http, Limites(http).RefreshPorMinuto));
+            opcoes.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(http =>
             {
-                TokenLimit = LimiteGlobal,
-                TokensPerPeriod = FichasPorRecarga,
-                ReplenishmentPeriod = PeriodoRecarga,
-                QueueLimit = 0,
-                AutoReplenishment = true,
-            }));
+                var limites = Limites(http);
+                return RateLimitPartition.GetTokenBucketLimiter(ChaveGlobal(http), _ => new TokenBucketRateLimiterOptions
+                {
+                    TokenLimit = limites.GlobalPorMinuto,
+                    TokensPerPeriod = limites.FichasPorSegundo,
+                    ReplenishmentPeriod = PeriodoRecarga,
+                    QueueLimit = 0,
+                    AutoReplenishment = true,
+                });
+            });
         });
+    }
+
+    private static LimitesRequisicaoOptions Limites(HttpContext http) =>
+        http.RequestServices.GetRequiredService<IOptions<LimitesRequisicaoOptions>>().Value;
 
     private static RateLimitPartition<string> JanelaPorIp(HttpContext http, int limite) =>
         RateLimitPartition.GetFixedWindowLimiter(Ip(http), _ => new FixedWindowRateLimiterOptions
