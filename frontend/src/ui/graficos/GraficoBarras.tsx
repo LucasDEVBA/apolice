@@ -55,6 +55,8 @@ export interface GraficoBarrasProps {
   rotuloMedia?: string;
   /** Nome da série de média na legenda. */
   legendaMedia?: string;
+  /** Formato do valor da média (rótulo e legenda), com a unidade ("R$ 839"). Padrão: o do eixo. */
+  formatarMedia?: (valor: number) => string;
   altura?: number;
   className?: string;
 }
@@ -66,7 +68,8 @@ const DURACAO_ENTRADA_MS = 400;
 const ALTURA_MINIMA_BARRA = 2;
 // Espaço à direita do plot para o rótulo da média ("Média 4,1 mil" a 12 px), fora das barras.
 const LARGURA_ROTULO_MEDIA = 88;
-const EIXO_Y = { largo: 44, estreito: 34 } as const;
+// O estreito cabe "10,5 mil" a 12 px sem sair do card no mobile (o gráfico sangra 8 px).
+const EIXO_Y = { largo: 44, estreito: 50 } as const;
 const BARRA = { largo: 26, estreito: 14 } as const;
 
 function valorDeEixo(valor: number): string {
@@ -391,6 +394,7 @@ export function GraficoBarras({
   media,
   rotuloMedia,
   legendaMedia = "Média mensal",
+  formatarMedia = valorDeEixo,
   altura = ALTURA_PADRAO,
   className,
 }: GraficoBarrasProps) {
@@ -405,14 +409,14 @@ export function GraficoBarras({
   }));
   const temProjecao = linhas.some((l) => l.restante > 0);
   const textoMedia =
-    media === undefined ? undefined : (rotuloMedia ?? `Média ${valorDeEixo(media)}`);
+    media === undefined ? undefined : (rotuloMedia ?? `Média ${formatarMedia(media)}`);
   // Desktop: o valor está no rótulo da linha; mobile: vai junto do nome na legenda.
   const legendaDaMedia =
     media === undefined
       ? undefined
       : largo
         ? legendaMedia
-        : `${legendaMedia} · ${valorDeEixo(media)}`;
+        : `${legendaMedia} · ${formatarMedia(media)}`;
 
   return (
     <div className={cn("flex flex-col gap-3", className)}>

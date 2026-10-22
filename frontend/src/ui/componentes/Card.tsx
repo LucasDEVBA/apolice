@@ -21,6 +21,8 @@ interface CardHeaderProps {
   acoes?: ReactNode;
   nivel?: NivelTitulo;
   id?: string;
+  /** tabIndex=-1 no título: recebe o foco por script (troca de etapa de um assistente). */
+  focavel?: boolean;
   className?: string;
 }
 
@@ -30,6 +32,7 @@ export function CardHeader({
   acoes,
   nivel = "h2",
   id,
+  focavel = false,
   className,
 }: CardHeaderProps) {
   const Titulo = nivel;
@@ -41,7 +44,11 @@ export function CardHeader({
       )}
     >
       <div className="min-w-0">
-        <Titulo id={id} className="type-title-card text-ink">
+        <Titulo
+          id={id}
+          {...(focavel ? { tabIndex: -1 } : {})}
+          className="type-title-card text-ink outline-none"
+        >
           {titulo}
         </Titulo>
         {subtitulo && <p className="mt-[3px] text-label text-ink-3">{subtitulo}</p>}

@@ -1,36 +1,31 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
 import { LucideProvider } from "lucide-react";
+import { useState } from "react";
 import { createBrowserRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
 
 import { Toaster } from "@/ui/componentes/Toaster";
 import { TooltipProvider } from "@/ui/componentes/Tooltip";
 
-import { PersonaProvider } from "./PersonaContexto";
+import { criarQueryClient } from "./cliente-query";
 import { rotas } from "./rotas";
+import { SessaoProvider } from "./sessao/SessaoProvider";
 
-const SEGUNDOS_DADO_FRESCO = 30;
 const ATRASO_TOOLTIP_MS = 300;
 
-// Modo data (createBrowserRouter): errorElement por rota, rotas como objetos e, na fase 2,
-// loaders que pré-aquecem o cache do TanStack Query antes de a tela montar.
+// Modo data (createBrowserRouter): errorElement por rota e rotas como objetos.
 const router = createBrowserRouter(rotas);
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: { staleTime: SEGUNDOS_DADO_FRESCO * 1000, retry: 1, refetchOnWindowFocus: false },
-  },
-});
-
-export function App() {
+export function App({ queryClient }: { queryClient?: QueryClient }) {
+  const [cliente] = useState(() => queryClient ?? criarQueryClient());
   return (
-    <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={cliente}>
       <LucideProvider strokeWidth={1.6}>
         <TooltipProvider delayDuration={ATRASO_TOOLTIP_MS}>
-          <PersonaProvider>
+          <SessaoProvider>
             <RouterProvider router={router} />
             <Toaster />
-          </PersonaProvider>
+          </SessaoProvider>
         </TooltipProvider>
       </LucideProvider>
     </QueryClientProvider>

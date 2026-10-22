@@ -354,7 +354,7 @@ function SeletorParcelas({
   return (
     <div className="flex flex-col gap-1.5">
       <span id={`${id}-rotulo`} className="type-label text-ink">
-        Parcelamento
+        Simular parcelamento
       </span>
       <SegmentedControl
         aria-labelledby={`${id}-rotulo`}
@@ -378,8 +378,9 @@ function SeletorParcelas({
       )}
       <p id={`${id}-ajuda`} className="type-caption font-normal text-ink-3 tnum">
         {parcelas === 1
-          ? `À vista: ${formatarMoeda(plano.primeira)}`
-          : `1ª de ${formatarMoeda(plano.primeira)} + ${String(parcelas - 1)}× de ${formatarMoeda(plano.demais)}. A 1ª parcela absorve o ajuste de centavos.`}
+          ? `À vista: ${formatarMoeda(plano.primeira)}.`
+          : `1ª de ${formatarMoeda(plano.primeira)} + ${String(parcelas - 1)}× de ${formatarMoeda(plano.demais)}. A 1ª parcela absorve o ajuste de centavos.`}{" "}
+        A escolha final é feita na emissão.
       </p>
     </div>
   );

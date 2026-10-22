@@ -15,17 +15,29 @@ const LARGURAS = {
 export type LarguraDialog = keyof typeof LARGURAS;
 
 /**
+ * Item de menu (Radix) que abriu a sobreposição: ele some com o menu, então o alvo da volta é o
+ * gatilho do menu (o "⋯"), que o conteúdo do menu referencia em aria-labelledby.
+ */
+function gatilhoDoMenu(elemento: HTMLElement): HTMLElement | null {
+  const idGatilho = elemento.closest('[role="menu"]')?.getAttribute("aria-labelledby");
+  return idGatilho ? document.getElementById(idGatilho) : null;
+}
+
+/**
  * Devolve o foco ao elemento que estava focado quando a sobreposição abriu. O Radix só devolve
- * ao Dialog.Trigger; aberta por estado (☰, "Mais", ⌘K), o foco cairia no <body>. Se alguém já
- * moveu o foco enquanto ela fechava (o H1 da página nova, depois de navegar), ele fica onde está.
+ * ao Dialog.Trigger; aberta por estado (☰, "Mais", ⌘K, item de menu), o foco cairia no <body>.
+ * Se alguém já moveu o foco enquanto ela fechava (o H1 da página nova, depois de navegar), ele
+ * fica onde está.
  */
 function useDevolucaoDeFoco() {
   const anterior = useRef<HTMLElement | null>(null);
+  const reserva = useRef<HTMLElement | null>(null);
 
   function aoAbrir() {
     // Roda antes de o Radix mover o foco para dentro: activeElement ainda é quem abriu.
     const ativo = document.activeElement;
     anterior.current = ativo instanceof HTMLElement && ativo !== document.body ? ativo : null;
+    reserva.current = anterior.current ? gatilhoDoMenu(anterior.current) : null;
   }
 
   function aoFechar(evento: Event) {
@@ -34,10 +46,11 @@ function useDevolucaoDeFoco() {
       evento.preventDefault();
       return;
     }
-    const alvo = anterior.current;
+    const alvo = [anterior.current, reserva.current].find((el) => el?.isConnected);
     anterior.current = null;
+    reserva.current = null;
     // Sem alvo guardado, segue o padrão do Radix (foco no Dialog.Trigger, se houver).
-    if (!alvo?.isConnected) return;
+    if (!alvo) return;
     evento.preventDefault();
     alvo.focus();
   }

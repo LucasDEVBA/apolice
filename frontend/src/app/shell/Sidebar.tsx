@@ -1,15 +1,19 @@
-import { ArrowLeftRight, ChevronsUpDown, Lock, Menu } from "lucide-react";
+import { ArrowLeftRight, Lock, LogOut, Menu } from "lucide-react";
 import { DropdownMenu as RadixMenu } from "radix-ui";
-import { useId, type ReactNode } from "react";
-import { NavLink } from "react-router";
+import { useId, useState, type ReactNode } from "react";
+import { NavLink, useNavigate } from "react-router";
 
+import { useFeatures } from "@/api/consultas/sistema";
+import { mensagemDoErro } from "@/api/erros";
 import { Avatar } from "@/ui/componentes/Avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuSeparator,
 } from "@/ui/componentes/DropdownMenu";
 import { notificar } from "@/ui/componentes/notificar";
 import { Tooltip } from "@/ui/componentes/Tooltip";
@@ -25,7 +29,9 @@ import {
   type ItemNavegacao,
 } from "../navegacao";
 import { usePersona } from "../persona-contexto";
+import { useContadoresNavegacao } from "./contadores";
 import { PERSONAS, type IdPersona } from "../personas";
+import { useSessao } from "../sessao/sessao-contexto";
 
 const PONTO_DO_TOM = {
   ok: "bg-ok-on-navy",
@@ -83,60 +89,80 @@ function ItemRestrito({ item }: { item: ItemNavegacao }) {
   );
 }
 
-function SeletorCorretora() {
+/**
+ * Corretora de demonstração: a API não modela corretora (DESIGN.md §10.2), então é um bloco
+ * estático rotulado, sem menu nem chevron, e não um seletor de uma opção só.
+ */
+function CorretoraDemonstracao() {
   return (
-    <DropdownMenu>
-      <RadixMenu.Trigger className="mx-1.5 mt-[22px] mb-[18px] flex items-center justify-between gap-2 rounded-lg border border-gold-line-soft px-3 py-3 text-left hover:bg-hover-tint-navy">
-        <span className="min-w-0">
-          <span className="block truncate text-item leading-snug font-semibold text-on-navy">
-            Ribeiro &amp; Associados
-          </span>
-          <span className="block text-xs text-on-navy-3">Corretora de seguros</span>
-        </span>
-        <ChevronsUpDown size={15} className="shrink-0 text-on-navy-3" aria-hidden />
-        <span className="sr-only">(trocar corretora)</span>
-      </RadixMenu.Trigger>
-      <DropdownMenuContent className="w-60">
-        <DropdownMenuLabel>Corretora</DropdownMenuLabel>
-        <DropdownMenuRadioGroup value="ribeiro">
-          <DropdownMenuRadioItem value="ribeiro">Ribeiro &amp; Associados</DropdownMenuRadioItem>
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className="mx-1.5 mt-[22px] mb-[18px] rounded-lg border border-gold-line-soft px-3 py-3">
+      <p className="truncate text-item leading-snug font-semibold text-on-navy">
+        Ribeiro &amp; Associados
+      </p>
+      <p className="text-xs text-on-navy-3">Corretora fictícia · demonstração</p>
+    </div>
   );
 }
 
-/** Menu ⇄ "Trocar persona": lista as 4 personas de demonstração. */
+/**
+ * Menu ⇄ "Trocar persona": com o login demo ligado (GET /features), troca de usuário de verdade
+ * (logout + POST /auth/demo); sempre oferece "Sair".
+ */
 export function MenuPersona({ gatilho }: { gatilho: ReactNode }) {
   const { persona, trocarPersona } = usePersona();
+  const { sair } = useSessao();
+  const { data: features } = useFeatures();
+  const navegar = useNavigate();
+  const [trocando, setTrocando] = useState(false);
+
+  async function trocar(id: IdPersona) {
+    const escolhida = PERSONAS.find((p) => p.id === id);
+    if (!escolhida || escolhida.id === persona.id || trocando) return;
+    setTrocando(true);
+    try {
+      await trocarPersona(id);
+      void navegar("/");
+      notificar.info({ titulo: `Agora você é ${escolhida.nome}`, descricao: escolhida.escopo });
+    } catch (erro) {
+      notificar.erro(mensagemDoErro(erro));
+    } finally {
+      setTrocando(false);
+    }
+  }
+
   return (
     <DropdownMenu>
       <RadixMenu.Trigger asChild>{gatilho}</RadixMenu.Trigger>
       <DropdownMenuContent align="end" side="top" className="w-72">
-        <DropdownMenuLabel>Entrar como (demonstração)</DropdownMenuLabel>
-        <DropdownMenuRadioGroup
-          value={persona.id}
-          onValueChange={(valor) => {
-            const escolhida = PERSONAS.find((p) => p.id === valor);
-            if (!escolhida || escolhida.id === persona.id) return;
-            trocarPersona(valor as IdPersona);
-            notificar.info({
-              titulo: `Agora você é ${escolhida.nome}`,
-              descricao: escolhida.escopo,
-            });
-          }}
-        >
-          {PERSONAS.map((p) => (
-            <DropdownMenuRadioItem key={p.id} value={p.id} className="h-auto py-2">
-              <span className="flex flex-col">
-                <span className="font-semibold">
-                  {p.nome} <span className="font-normal text-ink-2">· {p.rotuloPapel}</span>
-                </span>
-                <span className="text-xs text-ink-3">{p.escopo}</span>
-              </span>
-            </DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
+        {features?.loginDemo && (
+          <>
+            <DropdownMenuLabel>Entrar como (demonstração)</DropdownMenuLabel>
+            <DropdownMenuRadioGroup
+              value={persona.id ?? ""}
+              onValueChange={(valor) => void trocar(valor as IdPersona)}
+            >
+              {PERSONAS.map((p) => (
+                <DropdownMenuRadioItem
+                  key={p.id}
+                  value={p.id}
+                  disabled={trocando}
+                  className="h-auto py-2"
+                >
+                  <span className="flex flex-col">
+                    <span className="font-semibold">
+                      {p.nome} <span className="font-normal text-ink-2">· {p.rotuloPapel}</span>
+                    </span>
+                    <span className="text-xs text-ink-3">{p.escopo}</span>
+                  </span>
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+            <DropdownMenuSeparator />
+          </>
+        )}
+        <DropdownMenuItem icone={LogOut} onSelect={() => void sair()}>
+          Sair
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -159,7 +185,7 @@ function RodapeUsuario() {
         gatilho={
           <button
             type="button"
-            aria-label="Trocar persona"
+            aria-label="Trocar persona ou sair"
             className="grid size-11 shrink-0 place-items-center rounded-md text-on-navy-2 hover:bg-hover-tint-navy hover:text-on-navy md:size-10"
           >
             <ArrowLeftRight size={15} aria-hidden />
@@ -218,15 +244,20 @@ interface ConteudoSidebarProps {
 /** Anatomia completa: marca → corretora → navegação → filas salvas → sobre → usuário. */
 export function ConteudoSidebar({ aoNavegar, rodapeExtra }: ConteudoSidebarProps) {
   const { persona } = usePersona();
+  const contadores = useContadoresNavegacao();
   const filas = FILAS_POR_PAPEL[persona.papel];
   const ehAdmin = persona.papel === "Admin";
   return (
     <div className="on-navy flex min-h-full flex-col bg-sidebar px-3.5 pt-[22px] pb-4 text-on-navy-2">
       <Marca className="px-2.5 pt-1 text-on-navy" />
-      <SeletorCorretora />
+      <CorretoraDemonstracao />
       <nav aria-label="Principal" className="flex flex-col gap-0.5">
         {NAVEGACAO_PRINCIPAL.map((item) => (
-          <ItemNav key={item.para} item={item} aoNavegar={aoNavegar} />
+          <ItemNav
+            key={item.para}
+            item={{ ...item, contador: contadores[item.para] }}
+            aoNavegar={aoNavegar}
+          />
         ))}
         {ehAdmin ? (
           <ItemNav item={ITEM_ADMIN} aoNavegar={aoNavegar} />
@@ -296,6 +327,7 @@ export function SidebarRail({
   className?: string;
 }) {
   const { persona } = usePersona();
+  const contadores = useContadoresNavegacao();
   const ehAdmin = persona.papel === "Admin";
   return (
     <section
@@ -316,7 +348,7 @@ export function SidebarRail({
       </button>
       <nav aria-label="Principal" className="mt-2 flex flex-col items-center gap-1">
         {NAVEGACAO_PRINCIPAL.map((item) => (
-          <ItemRail key={item.para} item={item} />
+          <ItemRail key={item.para} item={{ ...item, contador: contadores[item.para] }} />
         ))}
         {ehAdmin ? (
           <ItemRail item={ITEM_ADMIN} />

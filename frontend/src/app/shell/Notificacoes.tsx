@@ -20,7 +20,8 @@ function rotuloDoSino(naoLidas: number): string {
 
 /**
  * Sino da topbar (DESIGN.md §4.3/§5.1): ponto --bad quando há não lidas e a contagem no nome
- * acessível. Fase 1 sem API: o painel diz o que chega com a integração, sem inventar avisos.
+ * acessível. A API não tem caixa de notificações do usuário: o painel diz onde estão os e-mails
+ * enviados aos segurados, sem inventar avisos.
  */
 export function Notificacoes({ naoLidas = 0, sobreMarinho = false }: NotificacoesProps) {
   const container = useContainerDePortal();
@@ -60,8 +61,8 @@ export function Notificacoes({ naoLidas = 0, sobreMarinho = false }: Notificacoe
               <BellOff size={16} aria-hidden />
             </span>
             <p className="text-label text-ink-2">
-              Nenhuma notificação nova. Avisos de emissão, sinistro e renovação chegam com a
-              integração da API.
+              Nenhuma notificação para você. Os e-mails enviados aos segurados ficam na aba
+              Comunicações de cada apólice.
             </p>
           </div>
         </Popover.Content>

@@ -1,29 +1,9 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { LucideProvider } from "lucide-react";
-import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it } from "vitest";
 
+import { renderApp } from "@/test/app";
 import { axe } from "@/test/utilitarios";
-import { TooltipProvider } from "@/ui/componentes/Tooltip";
-
-import { PersonaProvider } from "../PersonaContexto";
-import type { IdPersona } from "../personas";
-import { rotas } from "../rotas";
-
-function renderApp(rota: string, persona: IdPersona = "corretora") {
-  const router = createMemoryRouter(rotas, { initialEntries: [rota] });
-  render(
-    <LucideProvider>
-      <TooltipProvider>
-        <PersonaProvider inicial={persona}>
-          <RouterProvider router={router} />
-        </PersonaProvider>
-      </TooltipProvider>
-    </LucideProvider>,
-  );
-  return router;
-}
 
 /**
  * Sem CSS no jsdom, sidebar, rail e top bar mobile aparecem todos ao mesmo tempo; cada um tem um
@@ -51,7 +31,7 @@ describe("AppShell", () => {
     renderApp("/cotacoes");
     await screen.findByRole("heading", { name: "Cotações", level: 1 });
     const nav = within(regiaoDoShell("sidebar")).getByRole("navigation", { name: "Principal" });
-    expect(within(nav).getByRole("link", { name: "Cotações" })).toHaveAttribute(
+    expect(within(nav).getByRole("link", { name: /^Cotações(, \d+)?$/ })).toHaveAttribute(
       "aria-current",
       "page",
     );
@@ -60,11 +40,19 @@ describe("AppShell", () => {
     expect(within(nav).getByRole("group", { name: "Filas salvas" })).toBeInTheDocument();
   });
 
-  it("deve mostrar o Admin para a persona Admin e bloquear a página para as demais", async () => {
-    renderApp("/admin/tarifas", "analista");
+  it("deve bloquear a página do Admin para quem não é Admin (403 amigável)", async () => {
+    renderApp("/admin/tarifas", { persona: "analista" });
     expect(
-      await screen.findByRole("heading", { name: "Disponível para o perfil Admin" }),
+      await screen.findByRole("heading", { name: "Acesso restrito", level: 1 }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Disponível para o perfil Admin" }),
+    ).toBeInTheDocument();
+  });
+
+  it("deve abrir o Admin para a persona Admin, com a trilha da seção", async () => {
+    renderApp("/admin/tarifas", { persona: "admin" });
+    expect(await screen.findByRole("heading", { name: "Tarifas", level: 1 })).toBeInTheDocument();
     const trilha = screen.getByRole("navigation", { name: "Trilha de navegação" });
     expect(within(trilha).getByRole("link", { name: "Admin" })).toHaveAttribute(
       "href",
@@ -85,24 +73,26 @@ describe("AppShell", () => {
 
   it("deve anunciar a primeira tela depois do login (foco no H1 vindo de /login)", async () => {
     const user = userEvent.setup();
-    renderApp("/login");
+    renderApp("/login", { persona: null });
     await screen.findByRole("heading", { name: "Entrar", level: 1 });
     expect(document.title).toBe("Entrar · Apólice");
-    await user.click(screen.getByRole("link", { name: "Explorar o layout" }));
+    await user.click(await screen.findByRole("button", { name: /Ana Ribeiro/ }));
     const titulo = await screen.findByRole("heading", { name: "Visão da carteira", level: 1 });
     await waitFor(() => expect(titulo).toHaveFocus());
   });
 
   it("deve abrir a paleta com Ctrl K, navegar pelo teclado e anunciar os resultados", async () => {
     const user = userEvent.setup();
-    const router = renderApp("/");
+    const { router } = renderApp("/");
     await screen.findByRole("heading", { name: "Visão da carteira", level: 1 });
     await user.keyboard("{Control>}k{/Control}");
     const busca = await screen.findByRole("combobox", { name: "Buscar comando ou página" });
     expect(busca).toHaveFocus();
     await user.keyboard("sinis");
-    expect(screen.getAllByRole("option")).toHaveLength(1);
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("1 resultado."));
+    // A página Sinistros e as três buscas de registros pelo termo.
+    expect(screen.getAllByRole("option")).toHaveLength(4);
+    expect(screen.getAllByRole("option")[0]).toHaveTextContent("Sinistros");
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("4 resultados."));
     await user.keyboard("{Enter}");
     await waitFor(() => expect(router.state.location.pathname).toBe("/sinistros"));
   });
@@ -121,17 +111,17 @@ describe("AppShell", () => {
     await waitFor(() => expect(gatilho).toHaveFocus());
   });
 
-  it("deve esconder a lista vazia da paleta e dizer que nada foi encontrado", async () => {
+  it("deve levar o termo da paleta para a busca da lista de apólices", async () => {
     const user = userEvent.setup();
-    renderApp("/");
+    const { router } = renderApp("/");
     await screen.findByRole("heading", { name: "Visão da carteira", level: 1 });
     await user.keyboard("{Control>}k{/Control}");
-    await user.keyboard("zzz");
-    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
-    expect(screen.getByRole("combobox")).toHaveAttribute("aria-expanded", "false");
-    await waitFor(() =>
-      expect(screen.getByRole("status")).toHaveTextContent("Nenhum comando para “zzz”."),
-    );
+    await user.keyboard("Rafael");
+    expect(screen.getAllByRole("option")[0]).toHaveTextContent("Buscar “Rafael” em apólices");
+    await user.keyboard("{Enter}");
+    await waitFor(() => expect(router.state.location.search).toBe("?busca=Rafael"));
+    expect((await screen.findAllByText("Rafael Nogueira Castro")).length).toBeGreaterThan(0);
+    expect(screen.queryByText("Patrícia Menezes")).not.toBeInTheDocument();
   });
 
   it("deve devolver o foco ao ☰ ao fechar o drawer com Esc e ir ao H1 ao navegar por ele", async () => {
@@ -150,7 +140,7 @@ describe("AppShell", () => {
 
     await user.click(abrir);
     const reaberto = await screen.findByRole("dialog", { name: "Menu" });
-    await user.click(within(reaberto).getByRole("link", { name: "Cotações" }));
+    await user.click(within(reaberto).getByRole("link", { name: /^Cotações(, \d+)?$/ }));
     const titulo = await screen.findByRole("heading", { name: "Cotações", level: 1 });
     await waitFor(() => expect(titulo).toHaveFocus());
   });

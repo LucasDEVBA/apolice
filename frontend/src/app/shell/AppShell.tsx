@@ -4,6 +4,7 @@ import { Outlet, useLocation } from "react-router";
 import { PreferenciasAparencia } from "@/ui/componentes/ThemeToggle";
 import { Drawer } from "@/ui/componentes/Dialog";
 
+import { useUsuario } from "../sessao/sessao-contexto";
 import { BottomNav } from "./BottomNav";
 import { CarregandoPagina } from "./CarregandoPagina";
 import { PaletaComandos } from "./PaletaComandos";
@@ -18,6 +19,7 @@ export function AppShell() {
   const [menuAberto, setMenuAberto] = useState(false);
   const [buscaAberta, setBuscaAberta] = useState(false);
   const local = useLocation();
+  const usuario = useUsuario();
 
   // ⌘K / Ctrl K abre a paleta de comandos de qualquer lugar.
   useEffect(() => {
@@ -64,8 +66,10 @@ export function AppShell() {
           className="flex-1 px-4 pt-5 pb-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom)+24px)] outline-none md:px-6 md:pt-6 md:pb-12 xl:px-10 xl:pt-8"
         >
           <div className="mx-auto w-full max-w-[1360px]">
-            {/* key: cada rota tem a própria fronteira de Suspense (o fallback não "pisca" a anterior). */}
-            <Suspense key={local.pathname} fallback={<CarregandoPagina />}>
+            {/* key: cada rota tem a própria fronteira de Suspense (o fallback não "pisca" a anterior).
+                O usuário entra na key: trocada a sessão (persona, outra aba), a página remonta e
+                nenhum estado local (formulário, rascunho, diálogo) do usuário anterior sobrevive. */}
+            <Suspense key={`${usuario.id}:${local.pathname}`} fallback={<CarregandoPagina />}>
               <Outlet />
             </Suspense>
           </div>

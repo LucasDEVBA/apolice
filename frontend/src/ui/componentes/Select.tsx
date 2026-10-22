@@ -1,5 +1,6 @@
 import { Check, ChevronsUpDown } from "lucide-react";
 import { Select as RadixSelect } from "radix-ui";
+import type { Ref } from "react";
 
 import { useContainerDePortal } from "../tema/container-de-portal";
 import { cn } from "../utils/cn";
@@ -27,6 +28,8 @@ export interface SelectProps {
   "aria-invalid"?: true;
   "aria-required"?: true;
   "aria-label"?: string;
+  /** Ref do gatilho: com o Controller do RHF (field.ref), o foco vai ao Select quando ele tem erro. */
+  ref?: Ref<HTMLButtonElement>;
 }
 
 /** Radix Select com a mesma caixa do Input e chevron ChevronsUpDown 16 (DESIGN.md §4.8). */
@@ -40,6 +43,7 @@ export function Select({
   tamanho = "md",
   name,
   className,
+  ref,
   ...aria
 }: SelectProps) {
   const container = useContainerDePortal();
@@ -52,6 +56,7 @@ export function Select({
       disabled={desabilitado}
     >
       <RadixSelect.Trigger
+        ref={ref}
         {...aria}
         className={cn(
           CAIXA_DE_CAMPO,

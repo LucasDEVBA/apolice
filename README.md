@@ -12,8 +12,8 @@ Plataforma de cotação, emissão e gestão de apólices de seguro (Auto, Reside
 
 | O quê | Endereço |
 |---|---|
-| Aplicação | {{URL_FRONTEND}} |
-| Documentação da API (Scalar, OpenAPI 3.1) | {{URL_SCALAR}} |
+| Aplicação | [apolice.vercel.app](https://apolice.vercel.app) |
+| Documentação da API (Scalar, OpenAPI 3.1) | [apolice.vercel.app/scalar/v1](https://apolice.vercel.app/scalar/v1) |
 
 Na tela de login, os botões de persona entram sem senha como um dos quatro usuários de demonstração:
 

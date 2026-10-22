@@ -76,7 +76,7 @@ export function Topbar({ aoBuscar }: { aoBuscar: () => void }) {
         className="flex h-10 w-full max-w-[420px] min-w-0 items-center gap-2.5 rounded-md border border-line bg-surface-2 px-3 text-left text-sm text-ink-3 hover:border-line-strong"
       >
         <Search size={16} className="shrink-0" aria-hidden />
-        <span className="truncate">Buscar apólice, segurado, CPF ou placa</span>
+        <span className="truncate">Buscar apólice, segurado ou CPF</span>
         <kbd className="ml-auto shrink-0 rounded-xs border border-line bg-surface px-1.5 font-sans text-[0.71875rem] font-semibold text-ink-2">
           {ATALHO_BUSCA}
         </kbd>

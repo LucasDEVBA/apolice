@@ -1,4 +1,12 @@
-import { CornerDownLeft, Plus, Search, type LucideIcon } from "lucide-react";
+import {
+  Calculator,
+  CornerDownLeft,
+  LifeBuoy,
+  Plus,
+  Search,
+  ShieldCheck,
+  type LucideIcon,
+} from "lucide-react";
 import { useEffect, useId, useState, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router";
 
@@ -7,6 +15,7 @@ import { cn } from "@/ui/utils/cn";
 
 import { ITEM_ADMIN, ITEM_SOBRE, NAVEGACAO_PRINCIPAL } from "../navegacao";
 import { usePersona } from "../persona-contexto";
+import { pode } from "../sessao/permissoes";
 
 interface Comando {
   id: string;
@@ -30,14 +39,19 @@ function useComandos(): Comando[] {
     ...(persona.papel === "Admin" ? [ITEM_ADMIN] : []),
     ITEM_SOBRE,
   ];
+  const acoes: Comando[] = pode(persona.papel, "operarCarteira")
+    ? [
+        {
+          id: "nova-cotacao",
+          rotulo: "Nova cotação",
+          dica: "Ação",
+          para: "/cotacoes/nova",
+          icone: Plus,
+        },
+      ]
+    : [];
   return [
-    {
-      id: "nova-cotacao",
-      rotulo: "Nova cotação",
-      dica: "Ação",
-      para: "/cotacoes/nova",
-      icone: Plus,
-    },
+    ...acoes,
     ...navegacao.map((item) => ({
       id: item.para,
       rotulo: item.rotulo,
@@ -49,6 +63,36 @@ function useComandos(): Comando[] {
 }
 
 const ATRASO_ANUNCIO_MS = 400;
+
+/** Busca de registros: leva o termo para a busca da lista (a API filtra por número, nome e CPF). */
+function comandosDeBusca(termo: string): Comando[] {
+  const limpo = termo.trim();
+  if (limpo === "") return [];
+  const busca = encodeURIComponent(limpo);
+  return [
+    {
+      id: "busca-apolices",
+      rotulo: `Buscar “${limpo}” em apólices`,
+      dica: "Busca",
+      para: `/apolices?busca=${busca}`,
+      icone: ShieldCheck,
+    },
+    {
+      id: "busca-cotacoes",
+      rotulo: `Buscar “${limpo}” em cotações`,
+      dica: "Busca",
+      para: `/cotacoes?busca=${busca}`,
+      icone: Calculator,
+    },
+    {
+      id: "busca-sinistros",
+      rotulo: `Buscar “${limpo}” em sinistros`,
+      dica: "Busca",
+      para: `/sinistros?busca=${busca}`,
+      icone: LifeBuoy,
+    },
+  ];
+}
 
 function textoDoResultado(termo: string, total: number): string {
   if (termo.trim() === "") return "";
@@ -87,7 +131,10 @@ export function PaletaComandos({ aberta, aoMudar }: PaletaComandosProps) {
   const navegar = useNavigate();
   const idLista = useId();
   const comandos = useComandos();
-  const filtrados = comandos.filter((c) => normalizar(c.rotulo).includes(normalizar(termo.trim())));
+  const filtrados = [
+    ...comandos.filter((c) => normalizar(c.rotulo).includes(normalizar(termo.trim()))),
+    ...comandosDeBusca(termo),
+  ];
   const indiceAtivo = Math.min(ativo, Math.max(0, filtrados.length - 1));
   const idOpcao = (i: number) => `${idLista}-opcao-${String(i)}`;
   const vazia = filtrados.length === 0;
@@ -132,7 +179,7 @@ export function PaletaComandos({ aberta, aoMudar }: PaletaComandosProps) {
           aria-autocomplete="list"
           aria-activedescendant={vazia ? undefined : idOpcao(indiceAtivo)}
           aria-label="Buscar comando ou página"
-          placeholder="Digite para filtrar: cotações, apólices…"
+          placeholder="Página, ação, apólice, segurado ou CPF"
           value={termo}
           onChange={(e) => {
             setTermo(e.target.value);
@@ -187,7 +234,7 @@ export function PaletaComandos({ aberta, aoMudar }: PaletaComandosProps) {
         {anuncio}
       </p>
       <p className="mt-4 type-meta text-ink-3">
-        A busca por apólice, segurado, CPF ou placa chega com a integração da API.
+        Digite um número de apólice, nome do segurado ou CPF para buscar nas listas.
       </p>
     </Dialog>
   );

@@ -8,3 +8,4 @@ blob-report/
 .screens/
 *.tsbuildinfo
 .vite/
+.vercel

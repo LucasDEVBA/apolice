@@ -21,7 +21,7 @@ describe("Notificacoes", () => {
     renderSimples(<Notificacoes />);
     await user.click(screen.getByRole("button", { name: "Notificações" }));
     expect(await screen.findByRole("dialog", { name: "Notificações" })).toHaveTextContent(
-      "Nenhuma notificação nova",
+      "Nenhuma notificação para você",
     );
     expect(await axe(document.body)).toHaveNoViolations();
   });

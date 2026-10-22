@@ -4,10 +4,14 @@ const BASE_URL = process.env.BASE_URL ?? "http://localhost:4173";
 const NO_CI = Boolean(process.env.CI);
 // Permite rodar localmente com o Chrome instalado (PW_CHANNEL=chrome) sem baixar o Chromium do Playwright.
 const canal = process.env.PW_CHANNEL;
+// Contra a produção serverless, uma instância nova da Lambda (cold start) leva alguns segundos;
+// o padrão de 5 s do expect só vale para a stack local.
+const ALVO_REMOTO = !/^https?:\/\/(localhost|127\.0\.0\.1)/.test(BASE_URL);
 
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
+  ...(ALVO_REMOTO ? { expect: { timeout: 20_000 }, timeout: 180_000 } : {}),
   forbidOnly: NO_CI,
   retries: NO_CI ? 2 : 0,
   reporter: NO_CI ? [["github"], ["html", { open: "never" }]] : [["list"]],

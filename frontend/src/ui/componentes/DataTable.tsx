@@ -317,7 +317,10 @@ export function DataTable<T>({
         <>
           {carregando && <span className="sr-only">Carregando…</span>}
           <div
-            className={cn("hidden overflow-x-auto md:block", alturaMaxima && "overflow-y-auto")}
+            className={cn(
+              "relative hidden overflow-x-auto md:block",
+              alturaMaxima && "overflow-y-auto",
+            )}
             style={alturaMaxima ? { maxHeight: alturaMaxima } : undefined}
           >
             <table className="w-full border-collapse tnum">

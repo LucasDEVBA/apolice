@@ -1,5 +1,5 @@
 import { Ellipsis } from "lucide-react";
-import { NavLink } from "react-router";
+import { NavLink, useLocation } from "react-router";
 
 import { NAVEGACAO_PRINCIPAL } from "../navegacao";
 
@@ -9,6 +9,8 @@ const ITEM =
 
 /** Bottom nav (< md): Início, Cotações, Apólices, Sinistros e "Mais", que abre o drawer (DESIGN.md §5.2). */
 export function BottomNav({ aoAbrirMais }: { aoAbrirMais: () => void }) {
+  // Na cotação mobile a bottom nav dá lugar à barra do prêmio total (DESIGN.md §5.2).
+  if (useLocation().pathname === "/cotacoes/nova") return null;
   return (
     <nav
       aria-label="Principal"
