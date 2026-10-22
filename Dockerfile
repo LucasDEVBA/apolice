@@ -50,7 +50,7 @@ RUN dotnet publish src/Apolice.Worker/Apolice.Worker.csproj -c Release --no-buil
 # imagem só serve o ambiente local e o E2E; em produção roda o zip na Lambda.
 # O worker também usa a imagem aspnet: o Infrastructure tem FrameworkReference para
 # Microsoft.AspNetCore.App, então o runtime "puro" não basta.
-FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:d5633778c754e89a386882eddf8dbee6942447a8a4b8267c19cf1e1158d0b0ac AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:8af87eba5e7cdafb1514d7388be287365da97c132509e84dfe252ffd552398ca AS runtime
 WORKDIR /app
 # Binários ficam com dono root e o processo roda sem privilégio: a aplicação não consegue
 # alterar o próprio código mesmo se comprometida.
