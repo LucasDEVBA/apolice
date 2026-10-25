@@ -30,8 +30,8 @@ O Aurora DSQL atende aos quatro: é serverless (os primeiros 100 mil DPUs e 1 GB
 - gera o SQL de cada migration com o `IMigrationsSqlGenerator` do próprio EF;
 - passa cada comando pelo `TransformadorSqlDsql`: `CREATE [UNIQUE] INDEX` vira `... INDEX ASYNC IF NOT EXISTS`, tabelas e colunas ganham `IF NOT EXISTS`, e DDL incompatível (sequence, identity, trigger, extension, `jsonb`, índice parcial) é recusado antes de tocar o banco;
 - executa um comando por conexão, em autocommit, com retry de OCC, tratando "já existe" como sucesso: a migration é reexecutável depois de uma falha no meio;
-- espera o job de cada índice com `sys.wait_for_job` (best-effort) e grava o histórico na tabela do próprio EF;
-- cria o papel `apolice_app` com `LOGIN`, vincula-o às roles IAM das três Lambdas (`AWS IAM GRANT`) e concede `USAGE` no schema e `SELECT, INSERT, UPDATE, DELETE` tabela por tabela. As Lambdas conectam com esse papel; só o deploy usa o `admin`.
+- espera o job de cada índice com `CALL sys.wait_for_job(...)` (é procedure; best-effort) e grava o histórico na tabela do próprio EF;
+- cria o papel `apolice_app` com `LOGIN`, vincula-o às roles IAM das três Lambdas (`AWS IAM GRANT`) e concede `SELECT, INSERT, UPDATE, DELETE` tabela por tabela (na `auditoria`, só `SELECT, INSERT`: a trilha não se edita). Não há `GRANT USAGE` no schema `public`: no DSQL ele é entidade de sistema (o comando dá 0A000) e já concede `USAGE` a `PUBLIC`. As Lambdas conectam com esse papel; só o deploy usa o `admin`.
 
 O `Database.MigrateAsync` não serve no DSQL porque usa `LOCK TABLE` e várias DDLs por transação. O único adapter oficial do EF para DSQL publicado no NuGet, `Amazon.AuroraDsql.EntityFrameworkCore` 1.0.0, é compilado contra EF Core 9 (depende de `Microsoft.EntityFrameworkCore >= 9.0.7` e `Npgsql.EntityFrameworkCore.PostgreSQL >= 9.0.1`), enquanto este projeto usa EF Core 10.0.13 e Npgsql EF 10.0.3.
 
