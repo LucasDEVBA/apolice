@@ -327,7 +327,7 @@ Regras dos handlers:
   Um único `NpgsqlDataSource` serve EF, Dapper e numerador. Sem transações explícitas/savepoints no caminho normal.
 - Migrations EF geradas com o provedor Postgres. `DsqlMigrationRunner` aplica no DSQL: um comando
   DDL por transação (autocommit), `CREATE [UNIQUE] INDEX` → `... ASYNC`, `CREATE TABLE/INDEX IF NOT EXISTS`
-  (reexecutável; espera o job do índice com `sys.wait_for_job` e falha o deploy se o job falhar), grava histórico do
+  (reexecutável; espera o job do índice com `CALL sys.wait_for_job(...)` — é procedure, `SELECT` dá 42809 — e falha o deploy se o job falhar), grava histórico do
   EF, depois `CREATE ROLE`/`AWS IAM GRANT`/`GRANT` do papel da aplicação (`Database:AppRole`, `Database:AppRoleArns`).
   Os vínculos IAM vigentes são lidos de `sys.iam_pg_role_mappings`: só os ARNs que faltam recebem `AWS IAM GRANT`, e
   os que saíram da configuração recebem `AWS IAM REVOKE` (só quando todos os configurados já constam da visão).
@@ -568,6 +568,7 @@ Em env var use `__` no lugar de `:` (ex.: `Database__Provider`). Nada de segredo
 | `Seed:DadosDemo` | `true` | |
 | `Redis:ConnectionString` | — | opcional (L2 do HybridCache) |
 | `Ssm:Prefixo` | ex.: `/apolice/prod` | se presente, carrega parâmetros do SSM (em produção, só na API) |
+| `RateLimiting:AuthPorMinuto` / `RefreshPorMinuto` / `GlobalPorMinuto` / `FichasPorSegundo` | `10` / `30` / `120` / `2` | janelas fixas por IP (auth, refresh) e token bucket global por usuário ou IP (capacidade e recarga por segundo); o docker-compose eleva para o E2E |
 | `FeatureManagement:LoginDemo`/`TriagemAutomaticaSinistros`/`DocumentoPdf`/`EndossoOnline` | `true` | |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` / `OTEL_SERVICE_NAME` | — / `apolice-api` \| `apolice-worker` \| `apolice-outbox-relay` | exportador só se definido |
 
@@ -583,6 +584,7 @@ IF NOT EXISTS` (devolvem `job_id`; acompanhar em `sys.jobs`); `INSERT ... ON CON
 UPDATE SET ultimo = t.ultimo + 1 RETURNING ultimo`; `ILIKE`; keyset com `OR` explícito e com
 row-value `(a, b) < (x, y)`; `date_trunc('month', ts AT TIME ZONE 'America/Sao_Paulo')` + `to_char`;
 agregação com `FILTER`; `UPDATE ... WHERE versao = x`; `CREATE ROLE ... WITH LOGIN`; `GRANT USAGE ON
-SCHEMA`; `GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA`; `AWS IAM GRANT <papel> TO
+SCHEMA` num schema criado (no `public`, entidade de sistema do DSQL, dá 0A000 e é desnecessário: ele já concede
+`USAGE` a `PUBLIC`, conferido com `has_schema_privilege`); `GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA`; `AWS IAM GRANT <papel> TO
 '<arn da role>'` e `AWS IAM REVOKE`. Tudo funcionou. Índice criado com `ASYNC` só passa a ser usado
 quando o job termina — o migrator não precisa esperar, mas não dependa dele no mesmo deploy.
