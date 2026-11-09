@@ -164,7 +164,7 @@ services:
     restart: unless-stopped
 
   aspire-dashboard:
-    image: mcr.microsoft.com/dotnet/aspire-dashboard:13.6.1@sha256:03099004e132a7ca2feb66c5fa24715ffeaaf2fffab6f8b2cda23de3abd3ea45
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:13.6.4@sha256:55a5a9fb88ddcff91997d6889912a19a1627e3584bd41fa5141c9db5f8376754
     profiles: ["observability"]
     environment:
       # Só local: o dashboard fica sem login para não exigir o token impresso no log.
