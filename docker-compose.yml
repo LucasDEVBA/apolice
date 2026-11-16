@@ -64,7 +64,7 @@ services:
       start_period: 10s
 
   rabbitmq:
-    image: rabbitmq:4-management-alpine@sha256:d5c8b200a061242868833c8bbdd0703534a4a06ffe654a853e33acd46c7ce258
+    image: rabbitmq:4-management-alpine@sha256:4841f6384ef8313c3594cd3f2e9f40c10805f8a61c45f08a9a5d9ddea8199267
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-apolice}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-apolice-dev}
